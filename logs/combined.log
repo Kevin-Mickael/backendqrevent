@@ -1748,3 +1748,4 @@
 {"ip":"::ffff:127.0.0.1","level":"info","message":"User logged out successfully","service":"qrevent-backend","timestamp":"2026-02-06 10:32:22","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36","userId":"97324839-b03d-41f1-bef4-47011885453a"}
 {"email":"andriatsilavokevin@gmail.com","level":"info","message":"User logged in successfully","service":"qrevent-backend","timestamp":"2026-02-06T07:06:14.600Z","userId":"97324839-b03d-41f1-bef4-47011885453a"}
 {"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-06 11:15:39"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-06 11:23:12"}
