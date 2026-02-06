@@ -9,13 +9,24 @@ class StorageService {
         this.client = r2Client;
         this.bucket = config.r2Bucket;
         this.endpoint = config.r2Endpoint;
-        // The public URL might need to be configured separately if it differs from the endpoint
-        // For R2, if a custom domain is set up, it should be in config.
-        // If not, we might be able to construct it or return the R2.dev URL if enabled.
-        // Assuming for now we want to return the public access URL.
-        // Ideally, config.js should have a PUBLIC_URL for assets.
-        // If not, we'll try to use the bucket public URL.
-        this.publicUrl = process.env.R2_PUBLIC_URL || config.r2Endpoint.replace('https://', `https://${config.r2Bucket}.`);
+        
+        // 🛡️ Gestion du cas où R2 n'est pas configuré
+        if (process.env.R2_PUBLIC_URL) {
+            this.publicUrl = process.env.R2_PUBLIC_URL;
+        } else if (config.r2Endpoint && config.r2Bucket) {
+            this.publicUrl = config.r2Endpoint.replace('https://', `https://${config.r2Bucket}.`);
+        } else {
+            // Mode sans R2 - les uploads retourneront une erreur explicative
+            this.publicUrl = null;
+            console.warn('[Storage] R2 not configured. File uploads will be disabled.');
+        }
+    }
+    
+    /**
+     * Check if storage is configured
+     */
+    isConfigured() {
+        return !!(this.client && this.bucket && this.endpoint);
     }
 
     /**
@@ -54,6 +65,10 @@ class StorageService {
      * @returns {Promise<string>} The public URL of the uploaded file
      */
     async uploadFile(file, folder = '') {
+        if (!this.isConfigured()) {
+            throw new Error('Storage service not configured. Set R2 environment variables.');
+        }
+        
         if (!file) {
             throw new Error('No file provided');
         }
@@ -116,6 +131,11 @@ class StorageService {
      * @returns {Promise<void>}
      */
     async deleteFile(fileUrlOrKey) {
+        if (!this.isConfigured()) {
+            console.log('[R2 Delete] Storage not configured, skipping');
+            return;
+        }
+        
         if (!fileUrlOrKey) {
             console.log('[R2 Delete] No URL provided, skipping');
             return;

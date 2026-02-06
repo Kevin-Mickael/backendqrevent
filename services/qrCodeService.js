@@ -2,17 +2,17 @@ const { qrCodes, guests, events, users, families } = require('../utils/database'
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
 const config = require('../config/config');
+const auditService = require('./auditService');
 
 /**
  * Generate a unique and secure QR code
  * Following security rules: unique, unpredictable, with expiration
+ * 🛡️ SECURITY FIX: Using UUID v4 as required by rules.md
  */
 const generateSecureQRCode = () => {
-  // Generate a random string using crypto for better security
-  const randomBytes = crypto.randomBytes(Math.ceil(config.qrCodeLength / 2));
-  const qrCode = randomBytes.toString('hex').substring(0, config.qrCodeLength);
-
-  return qrCode;
+  // Generate a cryptographically secure UUID v4 as required by rules.md
+  // UUID v4 provides 122 bits of entropy, much more secure than hex string
+  return uuidv4();
 };
 
 /**
@@ -102,6 +102,23 @@ const createQRCodeForGuest = async (eventId, guestId, userId) => {
       qr_code: qrCode,
       qr_generated_at: new Date().toISOString(),
       qr_expires_at: expiresAt.toISOString()
+    });
+
+    // 🛡️ Log QR code generation for audit
+    await auditService.logEvent({
+      userId: userId,
+      action: auditService.ACTIONS.QR_GENERATE,
+      resourceType: auditService.RESOURCE_TYPES.QR_CODE,
+      resourceId: savedQRCode.id,
+      eventId: eventId,
+      details: {
+        guestId: guestId,
+        qrCode: qrCode,
+        expiresAt: expiresAt.toISOString(),
+        generatedFor: 'guest'
+      },
+      severity: auditService.SEVERITIES.INFO,
+      success: true
     });
 
     return {
@@ -237,6 +254,24 @@ const validateQRCode = async (qrCode) => {
     const updatedQRCode = await qrCodes.update(qrCodeDoc.id, {
       scan_count: qrCodeDoc.scan_count + 1,
       last_scanned_at: new Date().toISOString()
+    });
+
+    // 🛡️ Log QR code scan for audit
+    await auditService.logEvent({
+      userId: null, // QR scans can be anonymous
+      action: auditService.ACTIONS.QR_SCAN,
+      resourceType: auditService.RESOURCE_TYPES.QR_CODE,
+      resourceId: qrCodeDoc.id,
+      eventId: qrCodeDoc.event_id,
+      details: {
+        qrCode: qrCode,
+        guestId: qrCodeDoc.guest_id,
+        scanCount: updatedQRCode.scan_count,
+        lastScanned: updatedQRCode.last_scanned_at,
+        validationResult: 'success'
+      },
+      severity: auditService.SEVERITIES.INFO,
+      success: true
     });
 
     // Get associated guest and event data

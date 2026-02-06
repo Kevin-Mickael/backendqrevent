@@ -24,26 +24,38 @@ const authenticateGuest = async (req, res, next) => {
     if (accessToken) {
       const { supabaseService } = require('../config/supabase');
       
-      // Chercher dans game_family_access
+      // Chercher dans game_family_access avec infos du jeu
       const { data: familyAccess, error: familyError } = await supabaseService
         .from('game_family_access')
-        .select('*')
+        .select(`
+          *,
+          game:games(event_id)
+        `)
         .eq('access_token', accessToken)
         .single();
 
       if (familyAccess) {
-        guestData = familyAccess;
+        guestData = {
+          ...familyAccess,
+          event_id: familyAccess.game?.event_id  // ← Important pour la vérification IDOR
+        };
         accessType = 'family';
       } else {
-        // Chercher dans game_guest_access
+        // Chercher dans game_guest_access avec infos du jeu
         const { data: guestAccess, error: guestError } = await supabaseService
           .from('game_guest_access')
-          .select('*')
+          .select(`
+            *,
+            game:games(event_id)
+          `)
           .eq('access_token', accessToken)
           .single();
 
         if (guestAccess) {
-          guestData = guestAccess;
+          guestData = {
+            ...guestAccess,
+            event_id: guestAccess.game?.event_id  // ← Important pour la vérification IDOR
+          };
           accessType = 'individual';
         }
       }
@@ -61,13 +73,15 @@ const authenticateGuest = async (req, res, next) => {
       }
 
       // Vérifier si le QR code est lié à une famille ou un invité
+      // 🛡️ SECURITY: Include event_id for later verification
       if (qrData.family_id) {
         const family = await families.findById(qrData.family_id);
         if (family) {
           guestData = {
             family_id: family.id,
             qr_code: qrCode,
-            game_id: gameId
+            game_id: gameId,
+            event_id: qrData.event_id  // ← Important pour la vérification IDOR
           };
           accessType = 'family';
         }
@@ -77,7 +91,8 @@ const authenticateGuest = async (req, res, next) => {
           guestData = {
             guest_id: guest.id,
             qr_code: qrCode,
-            game_id: gameId
+            game_id: gameId,
+            event_id: qrData.event_id  // ← Important pour la vérification IDOR
           };
           accessType = 'individual';
         }

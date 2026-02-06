@@ -4,25 +4,39 @@ const path = require('path');
 // Configure storage
 const storage = multer.memoryStorage();
 
-// Filter for image files
+// 🛡️ SECURITY: Enhanced file filter to prevent XSS via SVG
 const fileFilter = (req, file, cb) => {
-    const allowedFileTypes = /jpeg|jpg|png|webp|gif/;
+    // Whitelist strict des extensions autorisées (PAS de SVG!)
+    const allowedFileTypes = /jpeg|jpg|png|webp/;  // Retiré: gif, svg
     const extname = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
-    const allowedMimetypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    
+    // Whitelist strict des MIME types
+    const allowedMimetypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];  // Retiré: image/gif, image/svg+xml
     const mimetype = allowedMimetypes.includes(file.mimetype);
+
+    // 🛡️ Vérification supplémentaire: bloquer les fichiers contenant du JavaScript
+    const dangerousExtensions = /\.svg|\.svgz|\.html|\.htm|\.xhtml|\.js|\.jsx/i;
+    const hasDangerousExtension = dangerousExtensions.test(file.originalname.toLowerCase());
 
     console.log('File filter check:', {
         originalname: file.originalname,
         mimetype: file.mimetype,
         extname: path.extname(file.originalname).toLowerCase(),
         extnameValid: extname,
-        mimetypeValid: mimetype
+        mimetypeValid: mimetype,
+        hasDangerousExtension: hasDangerousExtension
     });
+
+    // Rejeter si l'extension est dangereuse
+    if (hasDangerousExtension) {
+        console.warn('[SECURITY] Rejected dangerous file type:', file.originalname);
+        return cb(new Error('File type not allowed for security reasons'), false);
+    }
 
     if (extname && mimetype) {
         return cb(null, true);
     } else {
-        cb(new Error('Only image files are allowed!'), false);
+        cb(new Error('Only image files (JPEG, PNG, WebP) are allowed!'), false);
     }
 };
 

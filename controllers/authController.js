@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const config = require('../config/config');
 const logger = require('../utils/logger');
 const storageService = require('../services/storageService');
+const auditService = require('../services/auditService');
 
 // Generate JWT token
 const generateToken = (userId) => {
@@ -12,12 +13,14 @@ const generateToken = (userId) => {
   });
 };
 
+// ============================================
 // Register a new user
+// ============================================
 const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // Validation des données d'entrée with enhanced security
+    // Validation
     if (!name || typeof name !== 'string' || name.trim().length < 2 || name.length > 100) {
       return res.status(400).json({
         success: false,
@@ -25,7 +28,7 @@ const register = async (req, res) => {
       });
     }
 
-    // Sanitize name to prevent XSS
+    // Sanitize name
     const sanitizedName = name.replace(/[<>]/g, '');
     if (sanitizedName !== name) {
       return res.status(400).json({
@@ -52,45 +55,51 @@ const register = async (req, res) => {
     const saltRounds = config.bcryptRounds;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Check if user already exists
-    const existingUser = await users.findByEmail(email.toLowerCase());
+    // Check if user exists
+    let existingUser;
+    try {
+      existingUser = await users.findByEmail(email.toLowerCase());
+    } catch (dbError) {
+      logger.error('Database error:', { error: dbError.message });
+      return res.status(503).json({
+        success: false,
+        message: 'Service temporarily unavailable. Please check server configuration.'
+      });
+    }
+    
     if (existingUser) {
-      logger.warn('Registration attempt with existing email', { email });
       return res.status(400).json({
         success: false,
         message: 'User already exists with this email'
       });
     }
 
-    // Create new user with default preferences
+    // Create user
     const userData = {
       name: sanitizedName,
       email: email.toLowerCase(),
       password_hash: hashedPassword,
-      role: 'organizer', // Default role
-      is_active: true,
-      preferences: {
-        language: 'en',  // Default language
-        theme: 'light',  // Default theme
-        notifications: true, // Default notification setting
-        timezone: 'UTC'  // Default timezone
-      }
+      role: 'organizer',
+      is_active: true
     };
 
-    const user = await users.create(userData);
+    let user;
+    try {
+      user = await users.create(userData);
+    } catch (dbError) {
+      logger.error('Database error:', { error: dbError.message });
+      return res.status(503).json({
+        success: false,
+        message: 'Service temporarily unavailable. Please check server configuration.'
+      });
+    }
 
-    // Generate secure session cookie with preferences
+    // Generate session
     const sessionUtils = require('../utils/session');
     const { token, cookieOptions } = await sessionUtils.generateSecureSessionCookie(user.id);
-
-    // Set the cookie
     res.cookie('session_token', token, cookieOptions);
 
-    logger.info('New user registered successfully', {
-      userId: user.id,
-      email: user.email,
-      timestamp: new Date().toISOString()
-    });
+    logger.info('New user registered', { userId: user.id, email: user.email });
 
     res.status(201).json({
       success: true,
@@ -101,16 +110,16 @@ const register = async (req, res) => {
         email: user.email,
         role: user.role,
         avatar_url: user.avatar_url,
-        preferences: user.preferences
+        preferences: user.preferences || {
+          language: 'en',
+          theme: 'light',
+          notifications: true,
+          timezone: 'UTC'
+        }
       }
     });
   } catch (error) {
-    logger.error('Registration error:', {
-      error: error.message,
-      stack: error.stack,
-      timestamp: new Date().toISOString()
-    });
-
+    logger.error('Registration error:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error during registration'
@@ -118,13 +127,27 @@ const register = async (req, res) => {
   }
 };
 
+// ============================================
 // Login user
+// ============================================
 const login = async (req, res) => {
+  const clientIP = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+  const userAgent = req.get('User-Agent');
+  
   try {
     const { email, password } = req.body;
 
-    // Validation des données d'entrée with enhanced security
+    // Validation
     if (!email || typeof email !== 'string' || !/\S+@\S+\.\S+/.test(email)) {
+      // 🛡️ Log invalid login attempt
+      await auditService.logLoginAttempt(
+        email || 'invalid_email',
+        clientIP,
+        userAgent,
+        false,
+        'invalid_email_format'
+      );
+      
       return res.status(400).json({
         success: false,
         message: 'Please enter a valid email address'
@@ -132,65 +155,141 @@ const login = async (req, res) => {
     }
 
     if (!password || typeof password !== 'string' || password.length < 6) {
+      // 🛡️ Log invalid login attempt
+      await auditService.logLoginAttempt(
+        email,
+        clientIP,
+        userAgent,
+        false,
+        'invalid_password_format'
+      );
+      
       return res.status(400).json({
         success: false,
         message: 'Password must be at least 6 characters long'
       });
     }
 
-    // Find user by email
-    const user = await users.findByEmail(email.toLowerCase());
-    if (!user) {
-      logger.warn('Login attempt with non-existent email', { email });
+    // Find user
+    let user;
+    try {
+      user = await users.findByEmail(email.toLowerCase());
+    } catch (dbError) {
+      logger.error('Database error:', { error: dbError.message });
+      return res.status(503).json({
+        success: false,
+        message: 'Service temporarily unavailable. Database connection failed.'
+      });
+    }
+    
+    // Constant time comparison
+    let isPasswordValid = false;
+    if (user) {
+      isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    } else {
+      // Fake hash for timing attack prevention
+      await bcrypt.compare(password, '$2a$12$fake.hash.for.timing.XXXXXXXXXXXXXXXXXXXXX');
+    }
+    
+    if (!user || !isPasswordValid) {
+      // 🛡️ Log failed login attempt with proper reason
+      const failureReason = !user ? 'user_not_found' : 'invalid_password';
+      await auditService.logLoginAttempt(
+        email.toLowerCase(),
+        clientIP,
+        userAgent,
+        false,
+        failureReason
+      );
+      
+      // 🛡️ Log security event for authentication failure
+      await auditService.logEvent({
+        userId: user?.id || null,
+        action: auditService.ACTIONS.LOGIN_FAILED,
+        resourceType: auditService.RESOURCE_TYPES.USER,
+        resourceId: user?.id || null,
+        ipAddress: clientIP,
+        userAgent,
+        details: { 
+          email: email.toLowerCase(), 
+          reason: failureReason,
+          timestamp: new Date().toISOString()
+        },
+        severity: auditService.SEVERITIES.WARNING,
+        success: false,
+        errorMessage: 'Invalid credentials'
+      });
+      
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password'
+        message: 'Invalid credentials'
       });
     }
 
-    // Compare password
-    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
-    if (!isPasswordValid) {
-      logger.warn('Login attempt with invalid password', { userId: user.id, email: user.email });
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password'
-      });
-    }
-
-    // Check if user is active
+    // Check if active
     if (!user.is_active) {
-      logger.warn('Login attempt with inactive account', { userId: user.id, email: user.email });
       return res.status(401).json({
         success: false,
         message: 'Account is deactivated'
       });
     }
 
-    // Generate secure session cookie with preferences
+    // Clear existing session
+    const existingToken = req.cookies?.session_token;
+    if (existingToken) {
+      res.clearCookie('session_token', { path: '/' });
+      res.clearCookie('refresh_token', { path: '/' });
+    }
+
+    // Generate new session
     const sessionUtils = require('../utils/session');
     const { token, cookieOptions } = await sessionUtils.generateSecureSessionCookie(user.id);
-
-    // Generate refresh token
-    const refreshTokenModule = require('../middleware/refreshToken');
-    const refreshToken = refreshTokenModule.generateRefreshToken(user.id);
-
-    // Set the cookies
     res.cookie('session_token', token, cookieOptions);
-    res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: config.nodeEnv === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      path: '/',
-      domain: config.nodeEnv === 'production' ? '.qrevent.com' : undefined
+
+    // Generate refresh token (optional)
+    try {
+      const refreshTokenModule = require('../middleware/refreshToken');
+      const refreshToken = await refreshTokenModule.generateRefreshToken(user.id);
+      const isProduction = config.nodeEnv === 'production';
+      res.cookie('refresh_token', refreshToken, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? 'strict' : 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: '/'
+      });
+    } catch (e) {
+      // Continue without refresh token
+    }
+
+    // 🛡️ Log successful login attempt
+    await auditService.logLoginAttempt(
+      email.toLowerCase(),
+      clientIP,
+      userAgent,
+      true,
+      null
+    );
+    
+    // 🛡️ Log successful authentication event
+    await auditService.logEvent({
+      userId: user.id,
+      action: auditService.ACTIONS.LOGIN_SUCCESS,
+      resourceType: auditService.RESOURCE_TYPES.USER,
+      resourceId: user.id,
+      ipAddress: clientIP,
+      userAgent,
+      sessionId: req.cookies?.session_token || 'new_session',
+      details: { 
+        email: user.email,
+        loginMethod: 'password',
+        timestamp: new Date().toISOString()
+      },
+      severity: auditService.SEVERITIES.INFO,
+      success: true
     });
 
-    logger.info('User logged in successfully', {
-      userId: user.id,
-      email: user.email,
-      timestamp: new Date().toISOString()
-    });
+    logger.info('User logged in', { userId: user.id });
 
     res.json({
       success: true,
@@ -210,13 +309,7 @@ const login = async (req, res) => {
       }
     });
   } catch (error) {
-    logger.error('Login error:', {
-      error: error.message,
-      stack: error.stack,
-      email: req.body.email,
-      timestamp: new Date().toISOString()
-    });
-
+    logger.error('Login error:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error during login'
@@ -224,10 +317,11 @@ const login = async (req, res) => {
   }
 };
 
+// ============================================
 // Get current user profile
+// ============================================
 const getProfile = async (req, res) => {
   try {
-    // req.user should be populated by the authentication middleware
     res.json({
       success: true,
       user: {
@@ -245,13 +339,7 @@ const getProfile = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Get profile error:', error);
-    logger.error('Get profile error:', {
-      userId: req.user?.id,
-      error: error.message,
-      stack: error.stack
-    });
-
+    logger.error('Get profile error:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching profile'
@@ -259,37 +347,55 @@ const getProfile = async (req, res) => {
   }
 };
 
+// ============================================
 // Logout user
+// ============================================
 const logout = async (req, res) => {
+  const clientIP = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+  const userAgent = req.get('User-Agent');
+  
   try {
-    // Get refresh token before clearing cookies
     const refreshToken = req.cookies.refresh_token;
+    const isProduction = config.nodeEnv === 'production';
 
-    // Clear the session cookies
     res.clearCookie('session_token', {
       httpOnly: true,
-      secure: config.nodeEnv === 'production',
-      sameSite: 'strict',
+      secure: isProduction,
+      sameSite: isProduction ? 'strict' : 'lax',
       path: '/'
     });
 
     res.clearCookie('refresh_token', {
       httpOnly: true,
-      secure: config.nodeEnv === 'production',
-      sameSite: 'strict',
+      secure: isProduction,
+      sameSite: isProduction ? 'strict' : 'lax',
       path: '/'
     });
 
-    // Revoke refresh token if present
     if (refreshToken) {
-      const refreshTokenModule = require('../middleware/refreshToken');
-      refreshTokenModule.revokeRefreshToken(req, res, () => {});
+      try {
+        const refreshTokenModule = require('../middleware/refreshToken');
+        await refreshTokenModule.revokeRefreshTokenDirect(refreshToken);
+      } catch (e) {
+        // Ignore
+      }
     }
 
-    logger.info('User logged out successfully', {
-      userId: req.user?.id,
-      userAgent: req.get('User-Agent'),
-      ip: req.ip
+    // 🛡️ Log successful logout
+    await auditService.logEvent({
+      userId: req.user?.id || null,
+      action: auditService.ACTIONS.LOGOUT,
+      resourceType: auditService.RESOURCE_TYPES.SESSION,
+      ipAddress: clientIP,
+      userAgent,
+      sessionId: req.cookies?.session_token || 'expired_session',
+      details: {
+        logoutMethod: 'manual',
+        refreshTokenRevoked: !!refreshToken,
+        timestamp: new Date().toISOString()
+      },
+      severity: auditService.SEVERITIES.INFO,
+      success: true
     });
 
     res.json({
@@ -297,13 +403,7 @@ const logout = async (req, res) => {
       message: 'Logged out successfully'
     });
   } catch (error) {
-    console.error('Logout error:', error);
-    logger.error('Logout error:', {
-      userId: req.user?.id,
-      error: error.message,
-      stack: error.stack
-    });
-
+    logger.error('Logout error:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error during logout'
@@ -311,12 +411,14 @@ const logout = async (req, res) => {
   }
 };
 
+// ============================================
 // Update user profile
+// ============================================
 const updateProfile = async (req, res) => {
   try {
     const { name, email, preferences, avatar_url } = req.body;
 
-    // Validate the incoming data with security considerations
+    // Validate
     if (name !== undefined) {
       if (typeof name !== 'string' || name.length > 100 || name.trim().length < 2) {
         return res.status(400).json({
@@ -324,7 +426,6 @@ const updateProfile = async (req, res) => {
           message: 'Name must be a string with 2-100 characters'
         });
       }
-      // Sanitize name to prevent XSS
       const sanitizedName = name.replace(/[<>]/g, '');
       if (sanitizedName !== name) {
         return res.status(400).json({
@@ -343,132 +444,29 @@ const updateProfile = async (req, res) => {
       }
     }
 
-    if (preferences !== undefined) {
-      if (typeof preferences !== 'object' || Array.isArray(preferences)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Preferences must be an object'
-        });
-      }
-
-      // Validate preferences structure to prevent deep nesting or malicious content
-      const MAX_PREF_DEPTH = 3;
-      const validateDepth = (obj, depth = 0) => {
-        if (depth > MAX_PREF_DEPTH) {
-          return false;
-        }
-        if (typeof obj === 'object' && obj !== null) {
-          for (const [key, value] of Object.entries(obj)) {
-            if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-              if (!validateDepth(value, depth + 1)) {
-                return false;
-              }
-            }
-          }
-        }
-        return true;
-      };
-
-      if (!validateDepth(preferences)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Preferences object is too deeply nested'
-        });
-      }
-    }
-
-    // Check if email is already taken by another user
+    // Check email availability
     if (email && email !== req.user.email) {
-      try {
-        const existingUser = await users.findByEmail(email.toLowerCase());
-        if (existingUser && existingUser.id !== req.user.id) {
-          return res.status(400).json({
-            success: false,
-            message: 'Email already in use by another user'
-          });
-        }
-      } catch (error) {
-        // If no user found with this email, continue
-        if (!error.message.includes('Row not found')) {
-          throw error;
-        }
+      const existingUser = await users.findByEmail(email.toLowerCase());
+      if (existingUser && existingUser.id !== req.user.id) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email already in use by another user'
+        });
       }
     }
 
     const updateData = {};
     if (name !== undefined) updateData.name = name;
-    if (email !== undefined) updateData.email = email.toLowerCase(); // Store emails in lowercase
-    
-    // Handle avatar_url update - validate URL format and delete old avatar
-    if (avatar_url !== undefined) {
-      // avatar_url can be null (removing avatar) or a valid URL
-      if (avatar_url !== null && avatar_url !== '') {
-        try {
-          new URL(avatar_url);
-        } catch (e) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid avatar URL format'
-          });
-        }
-        
-        // Delete old avatar from R2 if exists and different from new one
-        const currentAvatarUrl = req.user.avatar_url;
-        console.log('[Avatar Update] Checking old avatar:', {
-          currentAvatarUrl,
-          newAvatarUrl: avatar_url,
-          shouldDelete: !!(currentAvatarUrl && currentAvatarUrl !== avatar_url)
-        });
-        
-        if (currentAvatarUrl && currentAvatarUrl !== avatar_url) {
-          try {
-            console.log('[Avatar Update] Deleting old avatar from R2:', currentAvatarUrl);
-            await storageService.deleteFile(currentAvatarUrl);
-            logger.info('Old avatar deleted from R2', { 
-              userId: req.user.id, 
-              oldUrl: currentAvatarUrl 
-            });
-            console.log('[Avatar Update] Successfully deleted old avatar');
-          } catch (deleteError) {
-            // Log error but don't fail the update if delete fails
-            console.error('[Avatar Update] Failed to delete old avatar:', deleteError.message);
-            logger.warn('Failed to delete old avatar from R2', {
-              userId: req.user.id,
-              oldUrl: currentAvatarUrl,
-              error: deleteError.message
-            });
-          }
-        } else {
-          console.log('[Avatar Update] No old avatar to delete or same URL');
-        }
-      }
-      
-      updateData.avatar_url = avatar_url;
-    }
+    if (email !== undefined) updateData.email = email.toLowerCase();
+    if (avatar_url !== undefined) updateData.avatar_url = avatar_url;
 
-    // Handle preferences update
     if (preferences !== undefined) {
-      // Merge new preferences with existing ones
-      const sessionUtils = require('../utils/session');
-
-      // Get current user data to preserve other fields
       const currentUser = await users.findById(req.user.id);
       const currentPreferences = currentUser.preferences || {};
-
-      // Update preferences, ensuring we don't override sensitive fields
-      const newPreferences = { ...currentPreferences, ...preferences };
-      updateData.preferences = newPreferences;
-
-      // Update session with new preferences
-      await sessionUtils.updateSessionPreferences(res, req.user.id, newPreferences);
+      updateData.preferences = { ...currentPreferences, ...preferences };
     }
 
     const updatedUser = await users.update(req.user.id, updateData);
-
-    logger.info('User profile updated', {
-      userId: req.user.id,
-      updatedFields: Object.keys(updateData)
-    });
 
     res.json({
       success: true,
@@ -483,34 +481,7 @@ const updateProfile = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Update profile error:', error);
-    logger.error('Update profile error:', {
-      userId: req.user?.id,
-      error: error.message,
-      stack: error.stack
-    });
-
-    // Check if the error is related to the Supabase update issue we fixed
-    if (error.message.includes('Cannot coerce the result to a single JSON object')) {
-      // This suggests the user might not exist anymore
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    // Check if avatar_url column is missing
-    if (error.message.includes('avatar_url') || error.message.includes('column')) {
-      logger.error('Database schema error - avatar_url column may be missing:', {
-        error: error.message,
-        hint: 'Run migration: backend/migrations/001_add_avatar_url.sql'
-      });
-      return res.status(500).json({
-        success: false,
-        message: 'Database configuration error. Please contact support.'
-      });
-    }
-
+    logger.error('Update profile error:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while updating profile'

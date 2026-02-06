@@ -1,16 +1,22 @@
 const express = require('express');
 const { celebrate, Segments } = require('celebrate');
 const Joi = require('joi');
+const { v4: uuidv4 } = require('uuid');
 const { authenticateToken, authorizeRole, validateRequest } = require('../middleware/auth');
-const { validateQRCode, qrVerifyLimiter } = require('../middleware/security');
+const { validateQRCode, qrVerifyLimiter, uploadLimiter } = require('../middleware/security');
 const qrCodeService = require('../services/qrCodeService');
 const { users, events, guests, qrCodes, attendance, families, familyInvitations, familyRsvp, storyEvents, games, wishes, feedback, seatingTables } = require('../utils/database');
+const { updateEventIfOwner, softDeleteEventIfOwner, getEventIfOwner, updateGuestIfEventOwner, deleteGuestIfEventOwner } = require('../utils/db/atomicOperations');
 const upload = require('../middleware/upload');
 const uploadVideo = require('../middleware/uploadVideo');
 const uploadAny = require('../middleware/uploadAny');
 const storageService = require('../services/storageService');
 const imageService = require('../services/imageService');
 const { addImageOptimizationJob } = require('../services/imageOptimizationQueue');
+const { sanitizeEventData, sanitizeFilename, sanitizeForLog } = require('../utils/securityUtils');
+const { validateEventIdParam, validateGuestIdParam, buildSecurePath } = require('../utils/validationUtils');
+const logger = require('../utils/logger');
+const { redisService, imageProcessingQueue } = require('../services/redisService');
 
 const router = express.Router();
 
@@ -285,7 +291,7 @@ router.get('/events', authenticateToken, async (req, res) => {
       count: eventsList.length
     });
   } catch (error) {
-    console.error('Error fetching events:', error);
+    logger.error('Error fetching events:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching events'
@@ -296,13 +302,22 @@ router.get('/events', authenticateToken, async (req, res) => {
 // POST /api/events - Create a new event
 router.post('/events', authenticateToken, eventValidationSchema.create, async (req, res) => {
   try {
+    // 🛡️ Sanitiser les données pour éviter les injections
+    const sanitizedData = sanitizeEventData(req.body);
+    
     const eventData = {
-      ...req.body,
-      organizer_id: req.user.id,
+      ...sanitizedData,
+      organizer_id: req.user.id, // Toujours utiliser l'ID du user authentifié
       is_active: true
     };
 
     const event = await events.create(eventData);
+
+    logger.info('Event created', { 
+      eventId: event.id, 
+      userId: req.user.id,
+      title: event.title 
+    });
 
     res.status(201).json({
       success: true,
@@ -310,7 +325,11 @@ router.post('/events', authenticateToken, eventValidationSchema.create, async (r
       data: event
     });
   } catch (error) {
-    console.error('Error creating event:', error);
+    logger.error('Error creating event:', {
+      error: error.message,
+      userId: req.user?.id,
+      body: sanitizeForLog(req.body, 500)
+    });
     res.status(500).json({
       success: false,
       message: 'Server error while creating event'
@@ -343,7 +362,7 @@ router.get('/events/:eventId', authenticateToken, async (req, res) => {
       data: event
     });
   } catch (error) {
-    console.error('Error fetching event:', error);
+    logger.error('Error fetching event:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching event'
@@ -390,7 +409,7 @@ router.get('/events/:eventId/public', async (req, res) => {
       data: publicEventData
     });
   } catch (error) {
-    console.error('Error fetching public event:', error);
+    logger.error('Error fetching public event:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching event'
@@ -399,26 +418,14 @@ router.get('/events/:eventId/public', async (req, res) => {
 });
 
 // PUT /api/events/:eventId - Update an event
+// 🛡️ SECURITY: Uses atomic operation to prevent TOCTOU race condition
 router.put('/events/:eventId', authenticateToken, eventValidationSchema.update, async (req, res) => {
   try {
-    let event;
-    try {
-      event = await events.findById(req.params.eventId);
-    } catch (error) {
-      return res.status(404).json({
-        success: false,
-        message: 'Event not found or you do not have permission to update it'
-      });
-    }
-
-    if (!event || event.organizer_id !== req.user.id) {
-      return res.status(404).json({
-        success: false,
-        message: 'Event not found or you do not have permission to update it'
-      });
-    }
-
-    const updatedEvent = await events.update(req.params.eventId, req.body);
+    const updatedEvent = await updateEventIfOwner(
+      req.params.eventId, 
+      req.user.id, 
+      req.body
+    );
 
     res.json({
       success: true,
@@ -426,7 +433,7 @@ router.put('/events/:eventId', authenticateToken, eventValidationSchema.update, 
       data: updatedEvent
     });
   } catch (error) {
-    console.error('Error updating event:', error);
+    logger.error('Error updating event:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while updating event'
@@ -437,31 +444,23 @@ router.put('/events/:eventId', authenticateToken, eventValidationSchema.update, 
 // DELETE /api/events/:eventId - Delete an event (soft delete)
 router.delete('/events/:eventId', authenticateToken, async (req, res) => {
   try {
-    let event;
-    try {
-      event = await events.findById(req.params.eventId);
-    } catch (error) {
-      return res.status(404).json({
-        success: false,
-        message: 'Event not found or you do not have permission to delete it'
-      });
-    }
-
-    if (!event || event.organizer_id !== req.user.id) {
-      return res.status(404).json({
-        success: false,
-        message: 'Event not found or you do not have permission to delete it'
-      });
-    }
-
-    await events.softDelete(req.params.eventId);
+    // 🛡️ SECURITY: Uses atomic operation to prevent TOCTOU race condition
+    await softDeleteEventIfOwner(req.params.eventId, req.user.id);
 
     res.json({
       success: true,
       message: 'Event deleted successfully'
     });
   } catch (error) {
-    console.error('Error deleting event:', error);
+    logger.error('Error deleting event:', { error: error.message });
+    
+    if (error.message.includes('not found') || error.message.includes('permission')) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found or you do not have permission to delete it'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Server error while deleting event'
@@ -472,6 +471,16 @@ router.delete('/events/:eventId', authenticateToken, async (req, res) => {
 // POST /api/events/:eventId/upload-banner - Upload a banner image for an event
 router.post('/events/:eventId/upload-banner', authenticateToken, upload.single('banner'), async (req, res) => {
   try {
+    // 🛡️ SECURITY: Validate eventId format to prevent injection
+    try {
+      validateEventId(req.params.eventId);
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid event ID format'
+      });
+    }
+
     // Verify event belongs to user
     let event;
     try {
@@ -501,11 +510,11 @@ router.post('/events/:eventId/upload-banner', authenticateToken, upload.single('
     const oldBannerUrl = event.banner_image;
     if (oldBannerUrl) {
       try {
-        console.log('[Banner Upload] Deleting old banner:', oldBannerUrl);
+        logger.info('[Banner Upload] Deleting old banner', { url: oldBannerUrl });
         await storageService.deleteFile(oldBannerUrl);
-        console.log('[Banner Upload] Old banner deleted successfully');
+        logger.info('[Banner Upload] Old banner deleted successfully');
       } catch (deleteError) {
-        console.error('[Banner Upload] Failed to delete old banner:', deleteError.message);
+        logger.error('[Banner Upload] Failed to delete old banner', { error: deleteError.message });
         // Continue with upload even if delete fails
       }
     }
@@ -517,7 +526,7 @@ router.post('/events/:eventId/upload-banner', authenticateToken, upload.single('
           buffer: req.file.buffer,
           originalName: req.file.originalname,
           mimetype: req.file.mimetype,
-          folder: `events/${req.params.eventId}/banners`,
+          folder: buildSecurePath('events', req.params.eventId, 'banners'),
           imageUsage: 'banner', // Use banner-specific optimization
           userId: req.user.id,
           eventId: req.params.eventId
@@ -546,7 +555,7 @@ router.post('/events/:eventId/upload-banner', authenticateToken, upload.single('
           });
         }
       } catch (optimizationError) {
-        console.error('Error adding banner optimization job:', optimizationError);
+        logger.error('Error adding banner optimization job', { error: optimizationError.message });
 
         // Fallback to immediate processing if queue fails
         const { buffer, mimetype, extension } = await imageService.optimizeBannerImage(req.file.buffer);
@@ -560,7 +569,7 @@ router.post('/events/:eventId/upload-banner', authenticateToken, upload.single('
         req.file.originalname = `${originalNameWithoutExt}${extension}`;
 
         // Upload to R2 with event-specific folder
-        const folder = `events/${req.params.eventId}/banners`;
+        const folder = buildSecurePath('events', req.params.eventId, 'banners');
         const publicUrl = await storageService.uploadFile(req.file, folder);
 
         // Update the event with the banner URL
@@ -579,7 +588,7 @@ router.post('/events/:eventId/upload-banner', authenticateToken, upload.single('
       }
     } else {
       // For non-image files, upload directly
-      const folder = `events/${req.params.eventId}/banners`;
+      const folder = buildSecurePath('events', req.params.eventId, 'banners');
       const publicUrl = await storageService.uploadFile(req.file, folder);
 
       // Update the event with the banner URL
@@ -597,7 +606,7 @@ router.post('/events/:eventId/upload-banner', authenticateToken, upload.single('
       });
     }
   } catch (error) {
-    console.error('Error uploading banner:', error);
+    logger.error('Error uploading banner:', { error: error.message });
 
     // Check for specific image optimization errors
     if (error.message.includes('unsupported image format') ||
@@ -611,7 +620,7 @@ router.post('/events/:eventId/upload-banner', authenticateToken, upload.single('
 
     res.status(500).json({
       success: false,
-      message: error.message || 'Server error while uploading banner'
+      message: config.nodeEnv === 'development' ? error.message : 'Server error while uploading banner'
     });
   }
 });
@@ -619,6 +628,16 @@ router.post('/events/:eventId/upload-banner', authenticateToken, upload.single('
 // POST /api/events/:eventId/upload-cover - Upload a cover image for an event
 router.post('/events/:eventId/upload-cover', authenticateToken, upload.single('cover'), async (req, res) => {
   try {
+    // 🛡️ SECURITY: Validate eventId format to prevent injection
+    try {
+      validateEventId(req.params.eventId);
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid event ID format'
+      });
+    }
+
     // Verify event belongs to user
     let event;
     try {
@@ -651,7 +670,7 @@ router.post('/events/:eventId/upload-cover', authenticateToken, upload.single('c
           buffer: req.file.buffer,
           originalName: req.file.originalname,
           mimetype: req.file.mimetype,
-          folder: `events/${req.params.eventId}/covers`,
+          folder: buildSecurePath('events', req.params.eventId, 'covers'),
           imageUsage: 'cover',
           userId: req.user.id,
           eventId: req.params.eventId
@@ -666,7 +685,7 @@ router.post('/events/:eventId/upload-cover', authenticateToken, upload.single('c
           }
         });
       } catch (optimizationError) {
-        console.error('Error adding cover optimization job:', optimizationError);
+        logger.error('Error adding cover optimization job', { error: optimizationError.message });
 
         // Fallback to immediate processing if queue fails
         const { buffer, mimetype, extension } = await imageService.optimizeCoverImage(req.file.buffer);
@@ -680,7 +699,7 @@ router.post('/events/:eventId/upload-cover', authenticateToken, upload.single('c
         req.file.originalname = `${originalNameWithoutExt}${extension}`;
 
         // Upload to R2 with event-specific folder
-        const folder = `events/${req.params.eventId}/covers`;
+        const folder = buildSecurePath('events', req.params.eventId, 'covers');
         const publicUrl = await storageService.uploadFile(req.file, folder);
 
         // Update the event with the cover URL
@@ -699,7 +718,7 @@ router.post('/events/:eventId/upload-cover', authenticateToken, upload.single('c
       }
     } else {
       // For non-image files, upload directly
-      const folder = `events/${req.params.eventId}/covers`;
+      const folder = buildSecurePath('events', req.params.eventId, 'covers');
       const publicUrl = await storageService.uploadFile(req.file, folder);
 
       // Update the event with the cover URL
@@ -717,10 +736,10 @@ router.post('/events/:eventId/upload-cover', authenticateToken, upload.single('c
       });
     }
   } catch (error) {
-    console.error('Error uploading cover:', error);
+    logger.error('Error uploading cover:', { error: error.message });
     res.status(500).json({
       success: false,
-      message: error.message || 'Server error while uploading cover'
+      message: config.nodeEnv === 'development' ? error.message : 'Server error while uploading cover'
     });
   }
 });
@@ -752,11 +771,11 @@ router.post('/user/upload-avatar', authenticateToken, upload.single('avatar'), a
       });
     }
 
-    console.log('Avatar upload request:', {
+    logger.info('Avatar upload request', {
       userId: req.user.id,
       fileSize: req.file.size,
       mimeType: req.file.mimetype,
-      originalName: req.file.originalname
+      originalName: sanitizeFilename(req.file.originalname)
     });
 
     let processedUrl = null;
@@ -782,7 +801,7 @@ router.post('/user/upload-avatar', authenticateToken, upload.single('avatar'), a
         removeOnFail: 5
       });
 
-      console.log('Avatar queued for background processing');
+      logger.info('Avatar queued for background processing');
 
       return res.json({
         success: true,
@@ -799,7 +818,7 @@ router.post('/user/upload-avatar', authenticateToken, upload.single('avatar'), a
       updated_at: new Date().toISOString()
     });
 
-    console.log('Avatar uploaded successfully:', {
+    logger.info('Avatar uploaded successfully', {
       userId: req.user.id,
       url: processedUrl
     });
@@ -811,10 +830,10 @@ router.post('/user/upload-avatar', authenticateToken, upload.single('avatar'), a
       processing: false
     });
   } catch (error) {
-    console.error('Error uploading avatar:', error);
+    logger.error('Error uploading avatar:', { error: error.message });
     res.status(500).json({
       success: false,
-      message: error.message || 'Server error while uploading avatar'
+      message: config.nodeEnv === 'development' ? error.message : 'Server error while uploading avatar'
     });
   }
 });
@@ -847,7 +866,7 @@ router.get('/events/:eventId/guests', authenticateToken, async (req, res) => {
       count: guestsList.length
     });
   } catch (error) {
-    console.error('Error fetching guests:', error);
+    logger.error('Error fetching guests:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching guests'
@@ -908,7 +927,7 @@ router.post('/events/:eventId/guests', authenticateToken, guestValidationSchema.
         req.user.id
       );
     } catch (qrError) {
-      console.error('Error generating QR code for guest:', qrError);
+      logger.error('Error generating QR code for guest', { error: qrError.message });
       // Still return success for guest creation, but log the QR code issue
     }
 
@@ -918,7 +937,7 @@ router.post('/events/:eventId/guests', authenticateToken, guestValidationSchema.
       data: guest
     });
   } catch (error) {
-    console.error('Error adding guest:', error);
+    logger.error('Error adding guest:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while adding guest'
@@ -927,45 +946,15 @@ router.post('/events/:eventId/guests', authenticateToken, guestValidationSchema.
 });
 
 // PUT /api/events/:eventId/guests/:guestId - Update a guest
+// 🛡️ SECURITY: Uses atomic operation to prevent TOCTOU race condition
 router.put('/events/:eventId/guests/:guestId', authenticateToken, guestValidationSchema.update, async (req, res) => {
   try {
-    // Verify event belongs to user
-    let event;
-    try {
-      event = await events.findById(req.params.eventId);
-    } catch (error) {
-      return res.status(404).json({
-        success: false,
-        message: 'Event not found or you do not have permission to access it'
-      });
-    }
-
-    if (!event || event.organizer_id !== req.user.id) {
-      return res.status(404).json({
-        success: false,
-        message: 'Event not found or you do not have permission to access it'
-      });
-    }
-
-    let guest;
-    try {
-      guest = await guests.findById(req.params.guestId);
-    } catch (error) {
-      return res.status(404).json({
-        success: false,
-        message: 'Guest not found or does not belong to this event'
-      });
-    }
-
-    // Verify guest belongs to the event
-    if (guest.event_id !== req.params.eventId) {
-      return res.status(404).json({
-        success: false,
-        message: 'Guest does not belong to this event'
-      });
-    }
-
-    const updatedGuest = await guests.update(req.params.guestId, req.body);
+    const updatedGuest = await updateGuestIfEventOwner(
+      req.params.guestId,
+      req.params.eventId,
+      req.user.id,
+      req.body
+    );
 
     res.json({
       success: true,
@@ -973,7 +962,7 @@ router.put('/events/:eventId/guests/:guestId', authenticateToken, guestValidatio
       data: updatedGuest
     });
   } catch (error) {
-    console.error('Error updating guest:', error);
+    logger.error('Error updating guest:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while updating guest'
@@ -982,52 +971,21 @@ router.put('/events/:eventId/guests/:guestId', authenticateToken, guestValidatio
 });
 
 // DELETE /api/events/:eventId/guests/:guestId - Remove a guest from an event
+// 🛡️ SECURITY: Uses atomic operation to prevent TOCTOU race condition
 router.delete('/events/:eventId/guests/:guestId', authenticateToken, async (req, res) => {
   try {
-    // Verify event belongs to user
-    let event;
-    try {
-      event = await events.findById(req.params.eventId);
-    } catch (error) {
-      return res.status(404).json({
-        success: false,
-        message: 'Event not found or you do not have permission to access it'
-      });
-    }
-
-    if (!event || event.organizer_id !== req.user.id) {
-      return res.status(404).json({
-        success: false,
-        message: 'Event not found or you do not have permission to access it'
-      });
-    }
-
-    let guest;
-    try {
-      guest = await guests.findById(req.params.guestId);
-    } catch (error) {
-      return res.status(404).json({
-        success: false,
-        message: 'Guest not found or does not belong to this event'
-      });
-    }
-
-    // Verify guest belongs to the event
-    if (guest.event_id !== req.params.eventId) {
-      return res.status(404).json({
-        success: false,
-        message: 'Guest does not belong to this event'
-      });
-    }
-
-    await guests.delete(req.params.guestId);
+    await deleteGuestIfEventOwner(
+      req.params.guestId,
+      req.params.eventId,
+      req.user.id
+    );
 
     res.json({
       success: true,
       message: 'Guest removed successfully'
     });
   } catch (error) {
-    console.error('Error removing guest:', error);
+    logger.error('Error removing guest:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while removing guest'
@@ -1067,7 +1025,7 @@ router.post('/events/:eventId/generate-qr-codes', authenticateToken, async (req,
       results
     });
   } catch (error) {
-    console.error('Error generating QR codes:', error);
+    logger.error('Error generating QR codes:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while generating QR codes'
@@ -1113,7 +1071,7 @@ router.post('/verify-qr/:qrCode', qrVerifyLimiter, validateQRCode, async (req, r
       }
     });
   } catch (error) {
-    console.error('Error verifying QR code:', error);
+    logger.error('Error verifying QR code:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while verifying QR code'
@@ -1142,7 +1100,7 @@ router.get('/invitations', authenticateToken, async (req, res) => {
       pagination = result.pagination;
     } catch (optimizedError) {
       // Fallback: utiliser la méthode standard si la vue n'existe pas
-      console.log('Fallback to standard events query (mv_event_summary not available)');
+      logger.info('Fallback to standard events query (mv_event_summary not available)');
       const allEvents = await events.findByOrganizer(req.user.id);
       
       // Pagination manuelle
@@ -1198,7 +1156,7 @@ router.get('/invitations', authenticateToken, async (req, res) => {
       count: invitations.length
     });
   } catch (error) {
-    console.error('Error fetching invitations:', error);
+    logger.error('Error fetching invitations:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching invitations',
@@ -1250,7 +1208,7 @@ router.get('/dashboard/summary', authenticateToken, async (req, res) => {
       data: summary
     });
   } catch (error) {
-    console.error('Error fetching dashboard summary:', error);
+    logger.error('Error fetching dashboard summary:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching dashboard summary'
@@ -1269,7 +1227,7 @@ router.get('/families', authenticateToken, async (req, res) => {
       data: familiesList
     });
   } catch (error) {
-    console.error('Error fetching families:', error);
+    logger.error('Error fetching families:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching families'
@@ -1290,7 +1248,7 @@ router.post('/families', authenticateToken, familyValidationSchema.create, async
       data: family
     });
   } catch (error) {
-    console.error('Error creating family:', error);
+    logger.error('Error creating family:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while creating family'
@@ -1314,7 +1272,7 @@ router.put('/families/:familyId', authenticateToken, familyValidationSchema.upda
       data: updatedFamily
     });
   } catch (error) {
-    console.error('Error updating family:', error);
+    logger.error('Error updating family:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while updating family'
@@ -1338,7 +1296,7 @@ router.delete('/families/:familyId', authenticateToken, async (req, res) => {
       message: 'Family deleted successfully'
     });
   } catch (error) {
-    console.error('Error deleting family:', error);
+    logger.error('Error deleting family:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while deleting family'
@@ -1380,7 +1338,7 @@ router.post('/events/:eventId/families/:familyId/generate-qr', authenticateToken
       data: result
     });
   } catch (error) {
-    console.error('Error generating QR code for family:', error);
+    logger.error('Error generating QR code for family:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while generating QR code'
@@ -1390,7 +1348,8 @@ router.post('/events/:eventId/families/:familyId/generate-qr', authenticateToken
 
 
 // POST /api/upload - Upload a file (image) to R2 with background optimization
-router.post('/upload', authenticateToken, upload.single('image'), async (req, res) => {
+// 🛡️ Rate limité pour éviter le spam
+router.post('/upload', authenticateToken, uploadLimiter, upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -1399,7 +1358,16 @@ router.post('/upload', authenticateToken, upload.single('image'), async (req, re
       });
     }
 
-    const folder = req.body.folder || 'uploads';
+    // 🛡️ SECURITY: Sanitize folder path to prevent path traversal
+    let folder;
+    try {
+      folder = buildSecurePath(req.body.folder, req.body.eventId);
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid folder path'
+      });
+    }
     const imageUsage = req.body.imageUsage || 'general';
 
     // Handle image optimization with background processing
@@ -1432,7 +1400,7 @@ router.post('/upload', authenticateToken, upload.single('image'), async (req, re
           });
         }
       } catch (optimizationError) {
-        console.error('Background optimization failed, falling back to direct:', optimizationError);
+        logger.error('Background optimization failed, falling back to direct', { error: optimizationError.message });
         
         // Fallback: optimize directly in the request
         const { buffer, mimetype, extension } = await imageService.optimizeImageByUsage(
@@ -1467,10 +1435,10 @@ router.post('/upload', authenticateToken, upload.single('image'), async (req, re
       });
     }
   } catch (error) {
-    console.error('Error uploading file:', error);
+    logger.error('Error uploading file:', { error: error.message });
     res.status(500).json({
       success: false,
-      message: error.message || 'Server error while uploading file'
+      message: config.nodeEnv === 'development' ? error.message : 'Server error while uploading file'
     });
   }
 });
@@ -1485,23 +1453,28 @@ router.post('/upload/video', authenticateToken, uploadVideo.single('video'), asy
       });
     }
 
-    console.log('Video upload request:', {
-      originalname: req.file.originalname,
+    logger.info('Video upload request', {
+      originalname: sanitizeFilename(req.file.originalname),
       mimetype: req.file.mimetype,
       size: req.file.size,
       folder: req.body.folder || 'videos'
     });
 
-    const folder = req.body.folder || 'videos';
-    const eventId = req.body.eventId || null;
-
-    // Construire le chemin du dossier avec eventId si fourni
-    const finalFolder = eventId ? `${folder}/events/${eventId}` : folder;
+    // 🛡️ SECURITY: Sanitize folder path to prevent path traversal
+    let finalFolder;
+    try {
+      finalFolder = buildSecurePath(req.body.folder, req.body.eventId);
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid folder path'
+      });
+    }
 
     // Upload vidéo directement (pas d'optimisation pour les vidéos pour l'instant)
     const publicUrl = await storageService.uploadFile(req.file, finalFolder);
 
-    console.log('Video uploaded successfully:', publicUrl);
+    logger.info('Video uploaded successfully', { url: publicUrl });
 
     res.json({
       success: true,
@@ -1515,10 +1488,10 @@ router.post('/upload/video', authenticateToken, uploadVideo.single('video'), asy
       }
     });
   } catch (error) {
-    console.error('Error uploading video:', error);
+    logger.error('Error uploading video:', { error: error.message });
     res.status(500).json({
       success: false,
-      message: error.message || 'Erreur serveur lors de l\'upload de la vidéo'
+      message: config.nodeEnv === 'development' ? error.message : 'Erreur serveur lors de l\'upload de la vidéo'
     });
   }
 });
@@ -1533,19 +1506,24 @@ router.post('/upload/any', authenticateToken, uploadAny.single('file'), async (r
       });
     }
 
-    console.log('File upload request:', {
-      originalname: req.file.originalname,
+    logger.info('File upload request', {
+      originalname: sanitizeFilename(req.file.originalname),
       mimetype: req.file.mimetype,
       size: req.file.size,
       folder: req.body.folder || 'uploads'
     });
 
-    const folder = req.body.folder || 'uploads';
-    const eventId = req.body.eventId || null;
+    // 🛡️ SECURITY: Sanitize folder path to prevent path traversal
+    let finalFolder;
+    try {
+      finalFolder = buildSecurePath(req.body.folder, req.body.eventId);
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid folder path'
+      });
+    }
     const imageUsage = req.body.imageUsage || 'general';
-
-    // Construire le chemin du dossier avec eventId si fourni
-    const finalFolder = eventId ? `${folder}/events/${eventId}` : folder;
 
     // Détecter si c'est une image ou une vidéo
     const isImage = req.file.mimetype.startsWith('image/');
@@ -1580,7 +1558,7 @@ router.post('/upload/any', authenticateToken, uploadAny.single('file'), async (r
           });
         }
       } catch (optimizationError) {
-        console.error('Background optimization failed, falling back to direct:', optimizationError);
+        logger.error('Background optimization failed, falling back to direct', { error: optimizationError.message });
         
         // Fallback: optimize directly
         const { buffer, mimetype, extension } = await imageService.optimizeImageByUsage(
@@ -1630,10 +1608,10 @@ router.post('/upload/any', authenticateToken, uploadAny.single('file'), async (r
       });
     }
   } catch (error) {
-    console.error('Error uploading file:', error);
+    logger.error('Error uploading file:', { error: error.message });
     res.status(500).json({
       success: false,
-      message: error.message || 'Erreur serveur lors de l\'upload du fichier'
+      message: config.nodeEnv === 'development' ? error.message : 'Erreur serveur lors de l\'upload du fichier'
     });
   }
 });
@@ -1690,7 +1668,7 @@ router.get('/events/:eventId/story-events', authenticateToken, async (req, res) 
       count: storyEventsList.length
     });
   } catch (error) {
-    console.error('Error fetching story events:', error);
+    logger.error('Error fetching story events:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching story events'
@@ -1733,7 +1711,7 @@ router.post('/events/:eventId/story-events', authenticateToken, storyEventValida
       data: storyEvent
     });
   } catch (error) {
-    console.error('Error creating story event:', error);
+    logger.error('Error creating story event:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while creating story event'
@@ -1788,7 +1766,7 @@ router.put('/events/:eventId/story-events/:storyEventId', authenticateToken, sto
       data: updatedStoryEvent
     });
   } catch (error) {
-    console.error('Error updating story event:', error);
+    logger.error('Error updating story event:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while updating story event'
@@ -1842,7 +1820,7 @@ router.delete('/events/:eventId/story-events/:storyEventId', authenticateToken, 
       message: 'Story event deleted successfully'
     });
   } catch (error) {
-    console.error('Error deleting story event:', error);
+    logger.error('Error deleting story event:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while deleting story event'
@@ -1880,7 +1858,7 @@ router.get('/events/:eventId/games', authenticateToken, async (req, res) => {
       count: gamesList.length
     });
   } catch (error) {
-    console.error('Error fetching games:', error);
+    logger.error('Error fetching games:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching games'
@@ -1913,7 +1891,7 @@ router.get('/events/:eventId/games/:gameId', authenticateToken, async (req, res)
       data: game
     });
   } catch (error) {
-    console.error('Error fetching game:', error);
+    logger.error('Error fetching game:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching game'
@@ -1947,7 +1925,7 @@ router.post('/events/:eventId/games', authenticateToken, gameValidationSchema.cr
       data: game
     });
   } catch (error) {
-    console.error('Error creating game:', error);
+    logger.error('Error creating game:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while creating game'
@@ -1982,7 +1960,7 @@ router.put('/events/:eventId/games/:gameId', authenticateToken, gameValidationSc
       data: updatedGame
     });
   } catch (error) {
-    console.error('Error updating game:', error);
+    logger.error('Error updating game:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while updating game'
@@ -2017,7 +1995,7 @@ router.patch('/events/:eventId/games/:gameId/status', authenticateToken, gameVal
       data: updatedGame
     });
   } catch (error) {
-    console.error('Error updating game status:', error);
+    logger.error('Error updating game status:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while updating game status'
@@ -2051,7 +2029,7 @@ router.delete('/events/:eventId/games/:gameId', authenticateToken, async (req, r
       message: 'Game deleted successfully'
     });
   } catch (error) {
-    console.error('Error deleting game:', error);
+    logger.error('Error deleting game:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while deleting game'
@@ -2085,7 +2063,7 @@ router.get('/events/:eventId/games/:gameId/stats', authenticateToken, async (req
       data: stats
     });
   } catch (error) {
-    console.error('Error fetching game stats:', error);
+    logger.error('Error fetching game stats:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching game statistics'
@@ -2122,7 +2100,7 @@ router.get('/events/:eventId/games/:gameId/questions', authenticateToken, async 
       count: questions.length
     });
   } catch (error) {
-    console.error('Error fetching questions:', error);
+    logger.error('Error fetching questions:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching questions'
@@ -2163,7 +2141,7 @@ router.post('/events/:eventId/games/:gameId/questions', authenticateToken, quest
       data: question
     });
   } catch (error) {
-    console.error('Error creating question:', error);
+    logger.error('Error creating question:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while creating question'
@@ -2206,7 +2184,7 @@ router.put('/events/:eventId/games/:gameId/questions/:questionId', authenticateT
       data: updatedQuestion
     });
   } catch (error) {
-    console.error('Error updating question:', error);
+    logger.error('Error updating question:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while updating question'
@@ -2248,7 +2226,7 @@ router.delete('/events/:eventId/games/:gameId/questions/:questionId', authentica
       message: 'Question deleted successfully'
     });
   } catch (error) {
-    console.error('Error deleting question:', error);
+    logger.error('Error deleting question:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while deleting question'
@@ -2291,7 +2269,7 @@ router.post('/events/:eventId/games/:gameId/questions/reorder', authenticateToke
       data: updatedQuestions
     });
   } catch (error) {
-    console.error('Error reordering questions:', error);
+    logger.error('Error reordering questions:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while reordering questions'
@@ -2332,7 +2310,8 @@ router.post('/events/:eventId/families/:familyId/invite', authenticateToken, asy
     }
 
     // Generate unique QR code
-    const qrCode = `FAM-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    // 🛡️ SECURITY FIX: Using UUID v4 as required by rules.md instead of Math.random
+    const qrCode = `FAM-${uuidv4()}`;
     
     // Calculate expiration (30 days from now)
     const expiresAt = new Date();
@@ -2360,7 +2339,7 @@ router.post('/events/:eventId/families/:familyId/invite', authenticateToken, asy
       }
     });
   } catch (error) {
-    console.error('Error creating family invitation:', error);
+    logger.error('Error creating family invitation:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while creating family invitation'
@@ -2397,7 +2376,7 @@ router.get('/events/:eventId/family-invitations', authenticateToken, async (req,
       count: invitationsWithStats.length
     });
   } catch (error) {
-    console.error('Error fetching family invitations:', error);
+    logger.error('Error fetching family invitations:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching family invitations'
@@ -2426,7 +2405,7 @@ router.delete('/family-invitations/:invitationId', authenticateToken, async (req
       message: 'Family invitation deleted successfully'
     });
   } catch (error) {
-    console.error('Error deleting family invitation:', error);
+    logger.error('Error deleting family invitation:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while deleting family invitation'
@@ -2483,7 +2462,7 @@ router.get('/public/invitation/:qrCode', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching public invitation:', error);
+    logger.error('Error fetching public invitation:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching invitation'
@@ -2530,7 +2509,7 @@ router.post('/public/invitation/:qrCode/rsvp', async (req, res) => {
             notes: response.notes
           });
         } catch (e) {
-          console.error('Error saving RSVP for member:', response.member_name, e);
+          logger.error('Error saving RSVP for member', { memberName: response.member_name, error: e.message });
           return null;
         }
       })
@@ -2548,7 +2527,7 @@ router.post('/public/invitation/:qrCode/rsvp', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error saving RSVP:', error);
+    logger.error('Error saving RSVP:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while saving RSVP'
@@ -2581,7 +2560,7 @@ router.get('/family-invitations/:invitationId/rsvp', authenticateToken, async (r
       }
     });
   } catch (error) {
-    console.error('Error fetching RSVP responses:', error);
+    logger.error('Error fetching RSVP responses:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching RSVP responses'
@@ -2634,7 +2613,7 @@ router.get('/events/:eventId/wishes', authenticateToken, async (req, res) => {
       count: wishesList.length
     });
   } catch (error) {
-    console.error('Error fetching wishes:', error);
+    logger.error('Error fetching wishes:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching wishes'
@@ -2686,7 +2665,7 @@ router.get('/events/:eventId/wishes/public', async (req, res) => {
       count: publicWishes.length
     });
   } catch (error) {
-    console.error('Error fetching public wishes:', error);
+    logger.error('Error fetching public wishes:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching wishes'
@@ -2758,7 +2737,7 @@ router.post('/events/:eventId/wishes', wishValidationSchema.create, async (req, 
       }
     });
   } catch (error) {
-    console.error('Error creating wish:', error);
+    logger.error('Error creating wish:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while creating wish'
@@ -2796,7 +2775,7 @@ router.put('/events/:eventId/wishes/:wishId/moderate', authenticateToken, async 
       data: moderatedWish
     });
   } catch (error) {
-    console.error('Error moderating wish:', error);
+    logger.error('Error moderating wish:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while moderating wish'
@@ -2832,7 +2811,7 @@ router.delete('/events/:eventId/wishes/:wishId', authenticateToken, async (req, 
       message: 'Wish deleted successfully'
     });
   } catch (error) {
-    console.error('Error deleting wish:', error);
+    logger.error('Error deleting wish:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while deleting wish'
@@ -2863,7 +2842,7 @@ router.get('/events/:eventId/wishes/stats', authenticateToken, async (req, res) 
       }
     });
   } catch (error) {
-    console.error('Error fetching wish stats:', error);
+    logger.error('Error fetching wish stats:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching wish statistics'
@@ -2911,7 +2890,7 @@ router.get('/events/:eventId/feedbacks', authenticateToken, async (req, res) => 
       count: feedbacks.length
     });
   } catch (error) {
-    console.error('Error fetching feedbacks:', error);
+    logger.error('Error fetching feedbacks:', { error: error.message });
     // Check if table doesn't exist
     if (error.message && error.message.includes('relation "feedbacks" does not exist')) {
       return res.status(500).json({
@@ -2960,7 +2939,7 @@ router.get('/events/:eventId/feedbacks/stats', authenticateToken, async (req, re
       }
     });
   } catch (error) {
-    console.error('Error fetching feedback stats:', error);
+    logger.error('Error fetching feedback stats:', { error: error.message });
     // Check if table or view doesn't exist
     if (error.message && (error.message.includes('relation "feedbacks" does not exist') || error.message.includes('relation "feedback_stats" does not exist'))) {
       return res.status(500).json({
@@ -3020,7 +2999,7 @@ router.post('/events/:eventId/feedbacks', authenticateToken, feedbackValidationS
       data: newFeedback
     });
   } catch (error) {
-    console.error('Error creating feedback:', error);
+    logger.error('Error creating feedback:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while creating feedback'
@@ -3077,7 +3056,7 @@ router.put('/events/:eventId/feedbacks/:feedbackId', authenticateToken, feedback
       data: updatedFeedback
     });
   } catch (error) {
-    console.error('Error updating feedback:', error);
+    logger.error('Error updating feedback:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while updating feedback'
@@ -3122,7 +3101,7 @@ router.delete('/events/:eventId/feedbacks/:feedbackId', authenticateToken, async
       message: 'Feedback deleted successfully'
     });
   } catch (error) {
-    console.error('Error deleting feedback:', error);
+    logger.error('Error deleting feedback:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while deleting feedback'
@@ -3194,7 +3173,7 @@ router.post('/events/:eventId/feedbacks/:feedbackId/moderate', authenticateToken
       data: updatedFeedback
     });
   } catch (error) {
-    console.error('Error moderating feedback:', error);
+    logger.error('Error moderating feedback:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while moderating feedback'
@@ -3287,7 +3266,7 @@ router.post('/public/feedback/:eventId', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error submitting public feedback:', error);
+    logger.error('Error submitting public feedback:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while submitting feedback'
@@ -3333,7 +3312,7 @@ router.get('/public/feedback/:eventId', async (req, res) => {
       count: feedbacks.length
     });
   } catch (error) {
-    console.error('Error fetching public feedbacks:', error);
+    logger.error('Error fetching public feedbacks:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching feedbacks'
@@ -3413,7 +3392,7 @@ router.get('/events/:eventId/seating-tables', authenticateToken, async (req, res
       count: tables.length
     });
   } catch (error) {
-    console.error('Error fetching seating tables:', error);
+    logger.error('Error fetching seating tables:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching seating tables'
@@ -3440,7 +3419,7 @@ router.get('/events/:eventId/seating-tables/available-families', authenticateTok
       count: availableFamilies.length
     });
   } catch (error) {
-    console.error('Error fetching available families:', error);
+    logger.error('Error fetching available families:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching available families'
@@ -3467,7 +3446,7 @@ router.get('/events/:eventId/seating-tables/unassigned-guests', authenticateToke
       count: unassignedGuests.length
     });
   } catch (error) {
-    console.error('Error fetching unassigned guests:', error);
+    logger.error('Error fetching unassigned guests:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching unassigned guests'
@@ -3493,7 +3472,7 @@ router.get('/events/:eventId/seating-tables/stats', authenticateToken, async (re
       data: stats
     });
   } catch (error) {
-    console.error('Error fetching seating stats:', error);
+    logger.error('Error fetching seating stats:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching seating stats'
@@ -3525,7 +3504,7 @@ router.post('/events/:eventId/seating-tables', authenticateToken, seatingTableVa
       data: table
     });
   } catch (error) {
-    console.error('Error creating seating table:', error);
+    logger.error('Error creating seating table:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while creating seating table'
@@ -3560,7 +3539,7 @@ router.put('/events/:eventId/seating-tables/:tableId', authenticateToken, seatin
       data: updatedTable
     });
   } catch (error) {
-    console.error('Error updating seating table:', error);
+    logger.error('Error updating seating table:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while updating seating table'
@@ -3594,7 +3573,7 @@ router.delete('/events/:eventId/seating-tables/:tableId', authenticateToken, asy
       message: 'Seating table deleted successfully'
     });
   } catch (error) {
-    console.error('Error deleting seating table:', error);
+    logger.error('Error deleting seating table:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while deleting seating table'
@@ -3649,7 +3628,7 @@ router.post('/events/:eventId/seating-tables/:tableId/assign-guest', authenticat
       data: assignment
     });
   } catch (error) {
-    console.error('Error assigning guest to table:', error);
+    logger.error('Error assigning guest to table:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while assigning guest to table'
@@ -3696,7 +3675,7 @@ router.post('/events/:eventId/seating-tables/:tableId/assign-family', authentica
       data: assignment
     });
   } catch (error) {
-    console.error('Error assigning family to table:', error);
+    logger.error('Error assigning family to table:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while assigning family to table'
@@ -3734,7 +3713,7 @@ router.post('/events/:eventId/seating-tables/:tableId/add-manual-guest', authent
       data: manualGuest
     });
   } catch (error) {
-    console.error('Error adding manual guest:', error);
+    logger.error('Error adding manual guest:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while adding manual guest'
@@ -3768,7 +3747,7 @@ router.delete('/events/:eventId/seating-tables/:tableId/assignments/:assignmentI
       message: 'Assignment removed from table successfully'
     });
   } catch (error) {
-    console.error('Error removing assignment:', error);
+    logger.error('Error removing assignment:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while removing assignment'
@@ -3802,7 +3781,7 @@ router.delete('/events/:eventId/seating-tables/:tableId/manual-guests/:manualGue
       message: 'Manual guest removed from table successfully'
     });
   } catch (error) {
-    console.error('Error removing manual guest:', error);
+    logger.error('Error removing manual guest:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while removing manual guest'
@@ -3847,7 +3826,7 @@ router.post('/events/:eventId/seating-tables/:tableId/move-assignment', authenti
       data: updatedAssignment
     });
   } catch (error) {
-    console.error('Error moving assignment:', error);
+    logger.error('Error moving assignment:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while moving assignment'

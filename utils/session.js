@@ -27,14 +27,17 @@ const generateSecureSessionCookie = async (userId, options = {}) => {
     ...options
   });
 
-  // Options de cookie sécurisé
+  // Options de cookie sécurisé - RENFORCÉ
+  // Respecte rules.md: cookies HTTP-only et Secure en production
+  const isProduction = config.nodeEnv === 'production';
+  
   const cookieOptions = {
     httpOnly: true,      // Empêche l'accès via JavaScript côté client
-    secure: config.nodeEnv === 'production', // Uniquement via HTTPS en production
-    sameSite: 'strict',  // Protection CSRF renforcée
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 jours en millisecondes
+    secure: isProduction, // Uniquement via HTTPS en production (OBLIGATOIRE)
+    sameSite: isProduction ? 'strict' : 'lax',  // 'lax' suffit pour localhost cross-port
+    maxAge: 24 * 60 * 60 * 1000, // 24 heures
     path: '/',           // Valide pour tout le site
-    domain: config.nodeEnv === 'production' ? '.qrevent.com' : undefined // Domaine pour le cookie
+    domain: isProduction ? process.env.COOKIE_DOMAIN || undefined : undefined
   };
 
   return {

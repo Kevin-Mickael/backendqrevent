@@ -2,6 +2,13 @@ const jwt = require('jsonwebtoken');
 const { users, events } = require('../utils/database');
 const config = require('../config/config');
 
+// 🛡️ SECURITY: Helper to set cache-control headers for auth errors
+const setAuthErrorHeaders = (res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+};
+
 // Authentication middleware
 const authenticateToken = async (req, res, next) => {
   try {
@@ -9,6 +16,7 @@ const authenticateToken = async (req, res, next) => {
     const token = req.cookies.session_token;
 
     if (!token) {
+      setAuthErrorHeaders(res);
       return res.status(401).json({
         success: false,
         message: 'Session token is required'
@@ -20,6 +28,7 @@ const authenticateToken = async (req, res, next) => {
     try {
       decoded = jwt.verify(token, config.jwtSecret);
     } catch (error) {
+      setAuthErrorHeaders(res);
       if (error.name === 'JsonWebTokenError') {
         return res.status(403).json({
           success: false,
@@ -42,6 +51,7 @@ const authenticateToken = async (req, res, next) => {
     try {
       user = await users.findById(decoded.userId);
     } catch (error) {
+      setAuthErrorHeaders(res);
       return res.status(401).json({
         success: false,
         message: 'Invalid session - user not found'
@@ -49,6 +59,7 @@ const authenticateToken = async (req, res, next) => {
     }
 
     if (!user || !user.is_active) {
+      setAuthErrorHeaders(res);
       return res.status(401).json({
         success: false,
         message: 'Invalid session - user not found or inactive'
@@ -60,6 +71,7 @@ const authenticateToken = async (req, res, next) => {
     next();
   } catch (error) {
     console.error('Authentication error:', error);
+    setAuthErrorHeaders(res);
     return res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -71,6 +83,7 @@ const authenticateToken = async (req, res, next) => {
 const authorizeRole = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {
+      setAuthErrorHeaders(res);
       return res.status(401).json({
         success: false,
         message: 'Authentication required'
@@ -78,6 +91,7 @@ const authorizeRole = (...roles) => {
     }
 
     if (!roles.includes(req.user.role)) {
+      setAuthErrorHeaders(res);
       return res.status(403).json({
         success: false,
         message: `Access denied. Role '${req.user.role}' is not authorized.`
@@ -113,6 +127,7 @@ const checkEventOwnership = async (req, res, next) => {
 
     // Assuming req.user is set by authenticateToken middleware
     if (!req.user) {
+      setAuthErrorHeaders(res);
       return res.status(401).json({
         success: false,
         message: 'Authentication required'
@@ -131,6 +146,7 @@ const checkEventOwnership = async (req, res, next) => {
     }
 
     if (!event) {
+      setAuthErrorHeaders(res);
       return res.status(404).json({
         success: false,
         message: 'Event not found'
@@ -138,6 +154,7 @@ const checkEventOwnership = async (req, res, next) => {
     }
 
     if (event.organizer_id !== req.user.id) {
+      setAuthErrorHeaders(res);
       return res.status(403).json({
         success: false,
         message: 'Access denied. You are not the owner of this event.'

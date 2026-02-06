@@ -5,6 +5,7 @@ const { authenticateGuest, optionalGuestAuth } = require('../middleware/guestAut
 const { authenticateToken } = require('../middleware/auth');
 const { games } = require('../utils/database');
 const { supabaseService } = require('../config/supabase');
+const logger = require('../utils/logger');
 
 const router = express.Router();
 
@@ -42,6 +43,19 @@ router.get('/public/:gameId', authenticateGuest, async (req, res) => {
       });
     }
 
+    // 🛡️ SECURITY: Verify that the game belongs to the guest's event (IDOR protection)
+    if (game.event_id !== req.guest.event_id) {
+      console.warn('[IDOR Attempt] Guest tried to access game from different event:', {
+        guestEventId: req.guest.event_id,
+        gameEventId: game.event_id,
+        gameId: gameId
+      });
+      return res.status(403).json({
+        success: false,
+        message: 'This game is not part of your event'
+      });
+    }
+
     // Masquer les réponses correctes
     const sanitizedQuestions = game.questions.map(q => ({
       id: q.id,
@@ -73,7 +87,7 @@ router.get('/public/:gameId', authenticateGuest, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching public game:', error);
+    logger.error('Error fetching public game:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching game'
@@ -93,6 +107,19 @@ router.post('/public/:gameId/play', authenticateGuest, playGameSchema, async (re
       return res.status(404).json({
         success: false,
         message: 'Game not found or not active'
+      });
+    }
+
+    // 🛡️ SECURITY: Verify that the game belongs to the guest's event (IDOR protection)
+    if (game.event_id !== req.guest.event_id) {
+      console.warn('[IDOR Attempt] Guest tried to play game from different event:', {
+        guestEventId: req.guest.event_id,
+        gameEventId: game.event_id,
+        gameId: gameId
+      });
+      return res.status(403).json({
+        success: false,
+        message: 'This game is not part of your event'
       });
     }
 
@@ -205,7 +232,7 @@ router.post('/public/:gameId/play', authenticateGuest, playGameSchema, async (re
         })));
 
       if (answersError) {
-        console.error('Error saving answers:', answersError);
+        logger.error('Error saving answers:', { error: answersError.message });
       }
     }
 
@@ -251,7 +278,7 @@ router.post('/public/:gameId/play', authenticateGuest, playGameSchema, async (re
       }
     });
   } catch (error) {
-    console.error('Error playing game:', error);
+    logger.error('Error playing game:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while processing game'
@@ -304,7 +331,7 @@ router.get('/public/:gameId/leaderboard', optionalGuestAuth, async (req, res) =>
       }
     });
   } catch (error) {
-    console.error('Error fetching leaderboard:', error);
+    logger.error('Error fetching leaderboard:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching leaderboard'
@@ -354,7 +381,7 @@ router.get('/public/:gameId/my-result', authenticateGuest, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching my result:', error);
+    logger.error('Error fetching my result:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching result'
@@ -422,7 +449,7 @@ router.post('/:gameId/generate-access', authenticateToken, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error generating access tokens:', error);
+    logger.error('Error generating access tokens:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while generating access tokens'
@@ -474,7 +501,7 @@ router.get('/:gameId/full-leaderboard', authenticateToken, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching full leaderboard:', error);
+    logger.error('Error fetching full leaderboard:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Server error while fetching leaderboard'
