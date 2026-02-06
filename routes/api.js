@@ -3834,4 +3834,123 @@ router.post('/events/:eventId/seating-tables/:tableId/move-assignment', authenti
   }
 });
 
+// GET /api/events/:eventId/menu-settings - Get menu settings for an event
+router.get('/events/:eventId/menu-settings', authenticateToken, async (req, res) => {
+  try {
+    let event;
+    try {
+      event = await events.findById(req.params.eventId);
+    } catch (error) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found or you do not have permission to access it'
+      });
+    }
+
+    if (!event || event.organizer_id !== req.user.id) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found or you do not have permission to access it'
+      });
+    }
+
+    // Default menu settings if not exists - table disabled by default unless invitation service is active
+    const defaultMenuSettings = {
+      message: true,
+      histoire: true,
+      invitation: true,
+      table: false, // Only active if invitation service is enabled
+      game: true,
+      avis: true
+    };
+
+    const menuSettings = event.menu_settings || defaultMenuSettings;
+
+    res.json({
+      success: true,
+      data: menuSettings
+    });
+  } catch (error) {
+    logger.error('Error fetching menu settings:', { error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching menu settings'
+    });
+  }
+});
+
+// PUT /api/events/:eventId/menu-settings - Update menu settings for an event
+router.put('/events/:eventId/menu-settings', authenticateToken, celebrate({
+  [Segments.BODY]: Joi.object().keys({
+    message: Joi.boolean().optional(),
+    histoire: Joi.boolean().optional(),
+    invitation: Joi.boolean().optional(),
+    table: Joi.boolean().optional(),
+    game: Joi.boolean().optional(),
+    avis: Joi.boolean().optional()
+  }).min(1)
+}), async (req, res) => {
+  try {
+    let event;
+    try {
+      event = await events.findById(req.params.eventId);
+    } catch (error) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found or you do not have permission to access it'
+      });
+    }
+
+    if (!event || event.organizer_id !== req.user.id) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found or you do not have permission to access it'
+      });
+    }
+
+    // Merge current settings with new ones
+    const currentSettings = event.menu_settings || {
+      message: true,
+      histoire: true,
+      invitation: true,
+      table: false,
+      game: true,
+      avis: true
+    };
+
+    const newSettings = { ...currentSettings, ...req.body };
+    
+    // Business logic: table placement only available if invitation service is enabled
+    if (req.body.hasOwnProperty('table') && req.body.table === true && !newSettings.invitation) {
+      return res.status(400).json({
+        success: false,
+        message: 'Table placement service requires invitation service to be enabled'
+      });
+    }
+
+    // Update the event with new menu settings
+    const updatedEvent = await updateEventIfOwner(req.params.eventId, req.user.id, {
+      menu_settings: newSettings
+    });
+
+    logger.info('Menu settings updated', { 
+      eventId: req.params.eventId, 
+      userId: req.user.id,
+      settings: newSettings 
+    });
+
+    res.json({
+      success: true,
+      message: 'Menu settings updated successfully',
+      data: updatedEvent.menu_settings
+    });
+  } catch (error) {
+    logger.error('Error updating menu settings:', { error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Server error while updating menu settings'
+    });
+  }
+});
+
 module.exports = router;

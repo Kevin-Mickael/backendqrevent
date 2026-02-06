@@ -1,4 +1,5 @@
 const logger = require('../utils/logger');
+const { createClient } = require('@supabase/supabase-js');
 
 /**
  * 🛡️ AUDIT SERVICE - Critical Security Component
@@ -14,22 +15,26 @@ const logger = require('../utils/logger');
  * - Security events (rate limiting, suspicious activity)
  */
 
+// Initialize Supabase client for audit logging
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+let supabase = null;
+
+try {
+  if (supabaseUrl && supabaseServiceKey) {
+    supabase = createClient(supabaseUrl, supabaseServiceKey);
+    logger.info('AuditService: Supabase client initialized for persistent logging');
+  } else {
+    logger.warn('AuditService: Supabase credentials missing, falling back to file logging');
+  }
+} catch (error) {
+  logger.error('AuditService: Failed to initialize Supabase client', { error: error.message });
+}
+
 class AuditService {
   /**
    * Log an audit event to the database
    * @param {Object} params - Audit log parameters
-   * @param {string} params.userId - UUID of the user performing the action
-   * @param {string} params.action - Action being performed (e.g., 'login', 'qr_scan')
-   * @param {string} params.resourceType - Type of resource affected (e.g., 'user', 'qr_code')
-   * @param {string} [params.resourceId] - ID of the affected resource
-   * @param {string} [params.eventId] - Event ID if action is event-related
-   * @param {string} [params.ipAddress] - Client IP address
-   * @param {string} [params.userAgent] - Client user agent
-   * @param {string} [params.sessionId] - Session identifier
-   * @param {Object} [params.details] - Additional context data
-   * @param {string} [params.severity='info'] - Severity level (info, warning, critical)
-   * @param {boolean} [params.success=true] - Whether the action succeeded
-   * @param {string} [params.errorMessage] - Error message if action failed
    * @returns {Promise<string>} - Audit log ID
    */
   async logEvent({
@@ -47,42 +52,35 @@ class AuditService {
     errorMessage = null
   }) {
     try {
-      // 🛡️ TEMPORARY: Log to application logger until migration is run
-      // TODO: Uncomment database logging after running migration 013_create_audit_logging.sql
-      
-      logger.info('Audit Event (File Log)', {
-        userId,
-        action,
-        resourceType,
-        resourceId,
-        eventId,
-        severity,
-        success,
-        ipAddress: this._maskIP(ipAddress),
-        userAgent: userAgent ? `${userAgent.split('/')[0]}/***` : null,
-        timestamp: new Date().toISOString(),
-        details: JSON.stringify(details),
-        errorMessage
-      });
+      // Try database logging first
+      if (supabase) {
+        const { data, error } = await supabase.rpc('log_audit_event', {
+          p_user_id: userId,
+          p_action: action,
+          p_resource_type: resourceType,
+          p_resource_id: resourceId,
+          p_event_id: eventId,
+          p_ip_address: ipAddress,
+          p_user_agent: userAgent,
+          p_session_id: sessionId,
+          p_details: details,
+          p_severity: severity,
+          p_success: success,
+          p_error_message: errorMessage
+        });
 
-      // Return fake audit ID for compatibility
-      return 'temp-' + Date.now();
-      
-      /* TODO: Uncomment after migration
-      const { database } = require('../utils/database');
-      const result = await database.query(`
-        SELECT log_audit_event($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) as audit_id
-      `, [
-        userId, action, resourceType, resourceId, eventId,
-        ipAddress, userAgent, sessionId, JSON.stringify(details),
-        severity, success, errorMessage
-      ]);
+        if (error) {
+          // Fallback to file logging if RPC fails (e.g., migration not run yet)
+          logger.warn('AuditService: RPC failed, falling back to file logging', { error: error.message });
+          return this._logToFile({ userId, action, resourceType, resourceId, eventId, ipAddress, userAgent, details, severity, success, errorMessage });
+        }
 
-      const auditId = result.rows[0]?.audit_id;
-      return auditId;
-      */
+        return data; // Returns audit_id
+      }
+
+      // Fallback to file logging
+      return this._logToFile({ userId, action, resourceType, resourceId, eventId, ipAddress, userAgent, details, severity, success, errorMessage });
     } catch (error) {
-      // Critical: If audit logging fails, we must know about it
       logger.error('CRITICAL: Audit logging failed', {
         error: error.message,
         action,
@@ -90,129 +88,175 @@ class AuditService {
         userId,
         severity: 'critical'
       });
-      // Don't throw error to avoid breaking login - graceful degradation
+      // Graceful degradation - don't break the calling function
       return 'error-' + Date.now();
     }
   }
 
   /**
+   * Fallback method - log to file
+   */
+  _logToFile({ userId, action, resourceType, resourceId, eventId, ipAddress, userAgent, details, severity, success, errorMessage }) {
+    logger.info('Audit Event', {
+      userId,
+      action,
+      resourceType,
+      resourceId,
+      eventId,
+      severity,
+      success,
+      ipAddress: this._maskIP(ipAddress),
+      userAgent: userAgent ? `${userAgent.split('/')[0]}/***` : null,
+      timestamp: new Date().toISOString(),
+      details: JSON.stringify(details),
+      errorMessage
+    });
+    return 'file-' + Date.now();
+  }
+
+  /**
    * Log a login attempt
-   * @param {string} email - Email address used for login
-   * @param {string} ipAddress - Client IP address
-   * @param {string} [userAgent] - Client user agent
-   * @param {boolean} [success=false] - Whether login succeeded
-   * @param {string} [failureReason] - Reason for failure if applicable
-   * @returns {Promise<string>} - Login attempt ID
    */
   async logLoginAttempt(email, ipAddress, userAgent = null, success = false, failureReason = null) {
     try {
-      // 🛡️ TEMPORARY: Log to application logger until migration is run
-      const logLevel = success ? 'info' : 'warning';
-      logger[logLevel]('Login Attempt (File Log)', {
-        email: this._maskEmail(email),
-        ipAddress: this._maskIP(ipAddress),
-        userAgent: userAgent ? `${userAgent.split('/')[0]}/***` : null,
-        success,
-        failureReason,
-        timestamp: new Date().toISOString()
-      });
+      if (supabase) {
+        const { data, error } = await supabase.rpc('log_login_attempt', {
+          p_email: email,
+          p_ip_address: ipAddress,
+          p_user_agent: userAgent,
+          p_success: success,
+          p_failure_reason: failureReason
+        });
 
-      return 'temp-login-' + Date.now();
+        if (error) {
+          logger.warn('AuditService: Login attempt RPC failed', { error: error.message });
+          return this._logLoginToFile(email, ipAddress, userAgent, success, failureReason);
+        }
 
-      /* TODO: Uncomment after migration
-      const { database } = require('../utils/database');
-      const result = await database.query(`
-        SELECT log_login_attempt($1, $2, $3, $4, $5) as attempt_id
-      `, [email, ipAddress, userAgent, success, failureReason]);
+        return data;
+      }
 
-      const attemptId = result.rows[0]?.attempt_id;
-      return attemptId;
-      */
+      return this._logLoginToFile(email, ipAddress, userAgent, success, failureReason);
     } catch (error) {
       logger.error('Failed to log login attempt', {
         error: error.message,
         email: this._maskEmail(email),
         success
       });
-      // Graceful degradation - don't break login
       return 'error-login-' + Date.now();
     }
   }
 
   /**
-   * Check failed login attempts for rate limiting
-   * @param {string} ipAddress - IP address to check
-   * @param {number} [minutes=15] - Time window in minutes
-   * @returns {Promise<number>} - Number of failed attempts
+   * Fallback for login attempt logging
    */
-  async getFailedLoginAttempts(ipAddress, minutes = 15) {
-    // 🛡️ TEMPORARY: Return 0 until migration is run (fail open for availability)
-    logger.info('Rate limit check (File Log)', {
+  _logLoginToFile(email, ipAddress, userAgent, success, failureReason) {
+    const logLevel = success ? 'info' : 'warn';
+    logger[logLevel]('Login Attempt', {
+      email: this._maskEmail(email),
       ipAddress: this._maskIP(ipAddress),
-      minutes,
-      result: 0,
-      note: 'Database not available - failing open'
+      userAgent: userAgent ? `${userAgent.split('/')[0]}/***` : null,
+      success,
+      failureReason,
+      timestamp: new Date().toISOString()
     });
-    return 0;
+    return 'file-login-' + Date.now();
   }
 
   /**
-   * Check failed login attempts by email for rate limiting
-   * @param {string} email - Email to check
-   * @param {number} [minutes=15] - Time window in minutes
-   * @returns {Promise<number>} - Number of failed attempts
+   * Check failed login attempts for rate limiting
+   */
+  async getFailedLoginAttempts(ipAddress, minutes = 15) {
+    try {
+      if (supabase) {
+        const { data, error } = await supabase.rpc('get_failed_login_attempts', {
+          p_ip_address: ipAddress,
+          p_minutes: minutes
+        });
+
+        if (error) {
+          logger.warn('Rate limit check failed', { error: error.message });
+          return 0; // Fail open for availability
+        }
+
+        return data || 0;
+      }
+
+      return 0; // No database, fail open
+    } catch (error) {
+      logger.error('Failed to check login attempts', { error: error.message });
+      return 0;
+    }
+  }
+
+  /**
+   * Check failed login attempts by email
    */
   async getFailedLoginAttemptsByEmail(email, minutes = 15) {
-    // 🛡️ TEMPORARY: Return 0 until migration is run (fail open for availability)
-    logger.info('Rate limit check by email (File Log)', {
-      email: this._maskEmail(email),
-      minutes,
-      result: 0,
-      note: 'Database not available - failing open'
-    });
-    return 0;
+    try {
+      if (supabase) {
+        const { data, error } = await supabase.rpc('get_failed_login_attempts_by_email', {
+          p_email: email,
+          p_minutes: minutes
+        });
+
+        if (error) {
+          logger.warn('Rate limit check by email failed', { error: error.message });
+          return 0;
+        }
+
+        return data || 0;
+      }
+
+      return 0;
+    } catch (error) {
+      logger.error('Failed to check login attempts by email', { error: error.message });
+      return 0;
+    }
   }
 
   /**
    * Clean up old audit logs (maintenance function)
-   * @param {number} [retentionDays=365] - Number of days to retain
-   * @returns {Promise<number>} - Number of deleted records
    */
   async cleanupAuditLogs(retentionDays = 365) {
     try {
-      const result = await database.query(`
-        SELECT cleanup_old_audit_logs($1) as deleted_count
-      `, [retentionDays]);
+      if (!supabase) {
+        throw new Error('Database not available');
+      }
 
-      const deletedCount = result.rows[0]?.deleted_count || 0;
-      
-      logger.info('Audit logs cleanup completed', {
-        deletedCount,
-        retentionDays
+      const { data, error } = await supabase.rpc('cleanup_old_audit_logs', {
+        p_retention_days: retentionDays
       });
 
+      if (error) throw error;
+
+      const deletedCount = data || 0;
+      logger.info('Audit logs cleanup completed', { deletedCount, retentionDays });
       return deletedCount;
     } catch (error) {
-      logger.error('Failed to cleanup audit logs', {
-        error: error.message,
-        retentionDays
-      });
+      logger.error('Failed to cleanup audit logs', { error: error.message, retentionDays });
       throw error;
     }
   }
 
   /**
    * Get security dashboard metrics
-   * @returns {Promise<Array>} - Security metrics
    */
   async getSecurityDashboard() {
     try {
-      const result = await database.query('SELECT * FROM security_dashboard ORDER BY metric');
-      return result.rows;
+      if (!supabase) {
+        throw new Error('Database not available');
+      }
+
+      const { data, error } = await supabase
+        .from('security_dashboard')
+        .select('*')
+        .order('metric');
+
+      if (error) throw error;
+      return data || [];
     } catch (error) {
-      logger.error('Failed to get security dashboard', {
-        error: error.message
-      });
+      logger.error('Failed to get security dashboard', { error: error.message });
       throw error;
     }
   }
@@ -221,7 +265,7 @@ class AuditService {
   _maskEmail(email) {
     if (!email) return null;
     const [local, domain] = email.split('@');
-    if (local.length <= 2) return email;
+    if (!domain || local.length <= 2) return email;
     return `${local.substring(0, 2)}***@${domain}`;
   }
 
@@ -231,7 +275,6 @@ class AuditService {
     if (parts.length === 4) {
       return `${parts[0]}.${parts[1]}.xxx.xxx`;
     }
-    // IPv6 masking
     if (ip.includes(':')) {
       const segments = ip.split(':');
       return segments.slice(0, 3).join(':') + ':xxxx:xxxx:xxxx:xxxx';
@@ -247,23 +290,23 @@ class AuditService {
     LOGOUT: 'logout',
     PASSWORD_CHANGE: 'password_change',
     ACCOUNT_LOCKED: 'account_locked',
-    
+
     // QR Codes
     QR_GENERATE: 'qr_generate',
     QR_SCAN: 'qr_scan',
     QR_VALIDATE: 'qr_validate',
     QR_INVALIDATE: 'qr_invalidate',
-    
+
     // Data Operations
     DATA_EXPORT: 'data_export',
     DATA_IMPORT: 'data_import',
     DATA_DELETE: 'data_delete',
-    
+
     // Admin Operations
     USER_CREATE: 'user_create',
     USER_DELETE: 'user_delete',
     USER_ROLE_CHANGE: 'user_role_change',
-    
+
     // Security Events
     RATE_LIMIT_HIT: 'rate_limit_hit',
     SUSPICIOUS_ACTIVITY: 'suspicious_activity',
@@ -289,5 +332,10 @@ class AuditService {
 
 // Create singleton instance
 const auditService = new AuditService();
+
+// Expose static constants on the instance for convenient access
+auditService.ACTIONS = AuditService.ACTIONS;
+auditService.RESOURCE_TYPES = AuditService.RESOURCE_TYPES;
+auditService.SEVERITIES = AuditService.SEVERITIES;
 
 module.exports = auditService;

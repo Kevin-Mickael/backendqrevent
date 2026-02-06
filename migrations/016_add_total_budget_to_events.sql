@@ -1,0 +1,2 @@
+ALTER TABLE events
+ADD COLUMN total_budget DECIMAL(12, 2) DEFAULT 0;

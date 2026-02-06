@@ -76,26 +76,31 @@ const seatingTablesDb = {
 
   /**
    * Vérifie que les tables existent avant d'y faire des requêtes
+   * VERSION ROBUSTE: ne lance pas d'erreur si les tables n'existent pas
    */
   checkTablesExist: async () => {
     try {
-      // Vérifier l'existence des tables essentielles
-      const tables = ['seating_tables', 'table_assignments', 'table_manual_guests'];
-      
-      for (const table of tables) {
-        const { error } = await supabaseService
-          .from(table)
-          .select('id', { count: 'exact', head: true });
-          
-        if (error) {
-          logger.warn(`Table ${table} may not exist or is inaccessible: ${error.message}`);
+      // Vérifier l'existence de la table seating_tables seulement
+      // Si elle existe, on suppose que les autres existent aussi
+      const { error } = await supabaseService
+        .from('seating_tables')
+        .select('id', { count: 'exact', head: true })
+        .limit(1);
+        
+      if (error) {
+        // Si l'erreur est une erreur de table inexistante, retourner false silencieusement
+        if (error.code === '42P01' || error.message?.includes('does not exist') || error.message?.includes("n'existe pas")) {
+          logger.debug('Seating tables do not exist yet - this is normal for new events');
           return false;
         }
+        logger.warn(`Error checking seating_tables: ${error.message}`);
+        return false;
       }
       
       return true;
     } catch (error) {
-      logger.error('Error checking table existence:', error);
+      // En cas d'erreur, on retourne false pour permettre le fonctionnement dégradé
+      logger.debug('Could not check table existence - assuming tables do not exist');
       return false;
     }
   },
@@ -357,82 +362,93 @@ const seatingTablesDb = {
   },
 
   /**
-   * Récupérer les invités non assignés - VERSION CORRIGÉE
+   * Récupérer les invités non assignés - VERSION ULTRA ROBUSTE
    */
   getUnassignedGuests: async (eventId, userId) => {
     try {
       // Vérifier l'accès à l'événement
       await seatingTablesDb.checkEventAccess(eventId, userId);
 
-      // Vérifier que les tables existent
-      const tablesExist = await seatingTablesDb.checkTablesExist();
-      if (!tablesExist) {
-        logger.warn('Database tables not initialized for unassigned guests');
-        // Retourner tous les invités si les tables de placement n'existent pas
-        const { data: allGuests, error } = await supabaseService
+      // ESSAI 1: Récupérer tous les invités de l'événement
+      let allGuests = [];
+      try {
+        const { data, error } = await supabaseService
           .from('guests')
           .select('id, first_name, last_name, email')
           .eq('event_id', eventId);
 
         if (error) {
-          throw new Error(`Error finding guests: ${error.message}`);
+          logger.warn('Could not fetch guests:', error.message);
+        } else {
+          allGuests = data || [];
         }
-
-        return allGuests || [];
+      } catch (guestError) {
+        logger.warn('Error fetching guests:', guestError.message);
       }
 
-      // Récupérer tous les invités de l'événement
-      const { data: allGuests, error: guestsError } = await supabaseService
-        .from('guests')
-        .select('id, first_name, last_name, email')
-        .eq('event_id', eventId);
-
-      if (guestsError) {
-        throw new Error(`Error finding guests: ${guestsError.message}`);
-      }
-
-      if (!allGuests || allGuests.length === 0) {
+      // Si pas d'invités, retourner une liste vide
+      if (allGuests.length === 0) {
         return [];
       }
 
-      // Récupérer toutes les tables de l'événement
-      const { data: tables, error: tablesError } = await supabaseService
-        .from('seating_tables')
-        .select('id')
-        .eq('event_id', eventId);
-
-      if (tablesError) {
-        throw new Error(`Error finding tables: ${tablesError.message}`);
+      // ESSAI 2: Vérifier si les tables de placement existent
+      let tablesExist = false;
+      try {
+        tablesExist = await seatingTablesDb.checkTablesExist();
+      } catch (checkError) {
+        logger.debug('Could not check tables existence');
       }
 
-      if (!tables || tables.length === 0) {
-        // Aucune table = tous les invités non assignés
+      // Si les tables n'existent pas, retourner tous les invités
+      if (!tablesExist) {
+        logger.debug('Tables do not exist - returning all guests as unassigned');
+        return allGuests;
+      }
+
+      // ESSAI 3: Récupérer les tables de l'événement
+      let tables = [];
+      try {
+        const { data, error } = await supabaseService
+          .from('seating_tables')
+          .select('id')
+          .eq('event_id', eventId);
+
+        if (!error) {
+          tables = data || [];
+        }
+      } catch (tableError) {
+        logger.debug('Could not fetch tables');
+      }
+
+      // Si aucune table, tous les invités sont non assignés
+      if (tables.length === 0) {
         return allGuests;
       }
 
       const tableIds = tables.map(t => t.id);
 
-      // Récupérer toutes les assignations d'invités
-      const { data: assignments, error: assignmentsError } = await supabaseService
-        .from('table_assignments')
-        .select('guest_id')
-        .in('table_id', tableIds)
-        .not('guest_id', 'is', null);
+      // ESSAI 4: Récupérer les assignations
+      let assignments = [];
+      try {
+        const { data, error } = await supabaseService
+          .from('table_assignments')
+          .select('guest_id')
+          .in('table_id', tableIds)
+          .not('guest_id', 'is', null);
 
-      if (assignmentsError) {
-        // En cas d'erreur, logger mais ne pas faire échouer
-        logger.warn('Could not fetch guest assignments:', assignmentsError.message);
-        return allGuests; // Retourner tous les invités par sécurité
+        if (!error) {
+          assignments = data || [];
+        }
+      } catch (assignError) {
+        logger.debug('Could not fetch assignments');
       }
 
-      const assignedGuestIds = new Set((assignments || []).map(a => a.guest_id).filter(Boolean));
-      
       // Filtrer les invités non assignés
+      const assignedGuestIds = new Set(assignments.map(a => a.guest_id).filter(Boolean));
       const unassignedGuests = allGuests.filter(guest => !assignedGuestIds.has(guest.id));
 
       logger.info('Unassigned guests retrieved', {
         eventId,
-        userId,
         totalGuests: allGuests.length,
         assignedGuests: assignedGuestIds.size,
         unassignedGuests: unassignedGuests.length
@@ -441,8 +457,9 @@ const seatingTablesDb = {
       return unassignedGuests;
 
     } catch (error) {
-      logger.error('Error in seatingTablesDb.getUnassignedGuests:', error);
-      throw error;
+      // En cas d'erreur majeure, retourner une liste vide plutôt que de planter
+      logger.error('Error in getUnassignedGuests - returning empty array:', error.message);
+      return [];
     }
   },
 
@@ -454,63 +471,85 @@ const seatingTablesDb = {
       // Vérifier l'accès à l'événement
       await seatingTablesDb.checkEventAccess(eventId, userId);
 
-      // Récupérer toutes les familles de l'utilisateur
-      const { data: families, error: familiesError } = await supabaseService
-        .from('families')
-        .select('*')
-        .eq('user_id', userId);
+      // ESSAI 1: Récupérer toutes les familles de l'utilisateur
+      let families = [];
+      try {
+        const { data, error } = await supabaseService
+          .from('families')
+          .select('*')
+          .eq('user_id', userId);
 
-      if (familiesError) {
-        throw new Error(`Error finding families: ${familiesError.message}`);
+        if (error) {
+          logger.warn('Could not fetch families:', error.message);
+        } else {
+          families = data || [];
+        }
+      } catch (famError) {
+        logger.warn('Error fetching families:', famError.message);
       }
 
-      if (!families || families.length === 0) {
+      if (families.length === 0) {
         return [];
       }
 
-      // Vérifier si les tables de placement existent
-      const tablesExist = await seatingTablesDb.checkTablesExist();
+      // ESSAI 2: Vérifier si les tables existent
+      let tablesExist = false;
+      try {
+        tablesExist = await seatingTablesDb.checkTablesExist();
+      } catch (checkError) {
+        logger.debug('Could not check tables existence');
+      }
+
       if (!tablesExist) {
         return families; // Toutes les familles disponibles
       }
 
-      // Récupérer les tables de l'événement
-      const { data: tables, error: tablesError } = await supabaseService
-        .from('seating_tables')
-        .select('id')
-        .eq('event_id', eventId);
+      // ESSAI 3: Récupérer les tables de l'événement
+      let tables = [];
+      try {
+        const { data, error } = await supabaseService
+          .from('seating_tables')
+          .select('id')
+          .eq('event_id', eventId);
 
-      if (tablesError) {
-        logger.warn('Could not fetch tables for family check:', tablesError.message);
-        return families; // Retourner toutes les familles par sécurité
+        if (!error) {
+          tables = data || [];
+        }
+      } catch (tableError) {
+        logger.debug('Could not fetch tables');
       }
 
-      if (!tables || tables.length === 0) {
+      if (tables.length === 0) {
         return families; // Aucune table = toutes les familles disponibles
       }
 
       const tableIds = tables.map(t => t.id);
 
-      // Récupérer les assignations de familles
-      const { data: assignments, error: assignmentsError } = await supabaseService
-        .from('table_assignments')
-        .select('family_id')
-        .in('table_id', tableIds)
-        .not('family_id', 'is', null);
+      // ESSAI 4: Récupérer les assignations de familles
+      let assignments = [];
+      try {
+        const { data, error } = await supabaseService
+          .from('table_assignments')
+          .select('family_id')
+          .in('table_id', tableIds)
+          .not('family_id', 'is', null);
 
-      if (assignmentsError) {
-        logger.warn('Could not fetch family assignments:', assignmentsError.message);
-        return families; // Retourner toutes les familles par sécurité
+        if (!error) {
+          assignments = data || [];
+        }
+      } catch (assignError) {
+        logger.debug('Could not fetch family assignments');
       }
 
-      const assignedFamilyIds = new Set((assignments || []).map(a => a.family_id).filter(Boolean));
+      const assignedFamilyIds = new Set(assignments.map(a => a.family_id).filter(Boolean));
       
       // Retourner les familles non assignées
       return families.filter(f => !assignedFamilyIds.has(f.id));
 
     } catch (error) {
-      logger.error('Error in seatingTablesDb.getAvailableFamilies:', error);
-      throw error;
+      // En cas d'erreur majeure, retourner une liste vide
+      logger.error('Error in getAvailableFamilies - returning empty array:', error.message);
+      return [];
     }
   },
 

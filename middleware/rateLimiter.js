@@ -77,4 +77,4 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-module.exports = { authLimiter, apiLimiter };
+module.exports = { authLimiter, apiLimiter, generalLimiter: apiLimiter };

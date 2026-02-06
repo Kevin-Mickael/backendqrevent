@@ -1,0 +1,3 @@
+ALTER TABLE budget_items 
+ADD COLUMN quantity INTEGER DEFAULT 1,
+ADD COLUMN unit_price DECIMAL(12, 2) DEFAULT 0;

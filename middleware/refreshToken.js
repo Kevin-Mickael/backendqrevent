@@ -2,94 +2,112 @@ const jwt = require('jsonwebtoken');
 const config = require('../config/config');
 const { users } = require('../utils/database');
 const logger = require('../utils/logger');
-const redis = require('ioredis');
 
 // ============================================
 // 🔴 CRITIQUE: Stockage Redis pour les refresh tokens
-// Permet le scaling horizontal et la persistance
+// Fallback automatique vers mémoire si Redis indisponible
 // ============================================
 let redisClient = null;
+let redisAvailable = false;
 let memoryFallback = new Map(); // Fallback si Redis indisponible
+let redisInitAttempted = false;
 
-// Initialiser Redis avec gestion d'erreur
+// Initialiser Redis avec gestion d'erreur gracieuse
 const initRedis = async () => {
-  if (redisClient) return redisClient;
-  
+  // Ne pas réessayer si déjà tenté et échoué
+  if (redisInitAttempted && !redisAvailable) {
+    return null;
+  }
+
+  if (redisClient && redisAvailable) {
+    return redisClient;
+  }
+
+  redisInitAttempted = true;
+
+  // Vérifier si Redis est configuré
+  const redisUrl = process.env.REDIS_URL;
+  const redisHost = process.env.REDIS_HOST || 'localhost';
+
+  // Si pas de config Redis explicite et en dev, skip silencieusement
+  if (!redisUrl && process.env.NODE_ENV !== 'production') {
+    logger.info('Redis not configured, using memory fallback for refresh tokens');
+    redisAvailable = false;
+    return null;
+  }
+
   try {
-    const client = new redis({
-      host: process.env.REDIS_HOST || 'localhost',
+    const Redis = require('ioredis');
+    const client = new Redis({
+      host: redisHost,
       port: process.env.REDIS_PORT || 6379,
       password: process.env.REDIS_PASSWORD,
       retryDelayOnFailover: 1000,
-      enableOfflineQueue: false, // Ne pas queue, on gère le fallback nous-mêmes
+      enableOfflineQueue: false,
       maxRetriesPerRequest: 1,
-      lazyConnect: false, // Connecter immédiatement
-      connectTimeout: 3000,
+      lazyConnect: true,
+      connectTimeout: 2000,
+      // Désactiver les retry automatiques en dev
+      retryStrategy: (times) => {
+        if (times > 1) {
+          logger.warn('Redis connection failed, falling back to memory');
+          return null; // Stop retrying
+        }
+        return 1000;
+      }
     });
 
-    // Attendre la connexion avec timeout
+    // Tenter la connexion avec timeout court
     await Promise.race([
-      new Promise((resolve, reject) => {
-        client.on('ready', resolve);
-        client.on('error', reject);
-      }),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Redis connection timeout')), 3000)
+      client.connect(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Redis connection timeout')), 2000)
       )
     ]);
 
+    // Tester la connexion
+    await client.ping();
+
     redisClient = client;
+    redisAvailable = true;
     logger.info('Redis connected for refresh tokens');
+
+    // Gérer la déconnexion
+    client.on('error', (err) => {
+      logger.warn('Redis error, falling back to memory:', err.message);
+      redisAvailable = false;
+    });
+
+    client.on('close', () => {
+      logger.info('Redis connection closed, using memory fallback');
+      redisAvailable = false;
+    });
+
     return redisClient;
   } catch (error) {
-    logger.warn('Redis unavailable, using memory fallback:', error.message);
+    logger.info('Redis unavailable, using memory fallback for refresh tokens:', error.message);
+    redisAvailable = false;
     redisClient = null;
     return null;
   }
 };
 
+// Obtenir le client Redis (ou null si indisponible)
 const getRedis = async () => {
-  if (!redisClient) {
+  if (redisAvailable && redisClient) {
+    return redisClient;
+  }
+
+  // Première tentative d'initialisation
+  if (!redisInitAttempted) {
     await initRedis();
   }
-  return redisClient;
+
+  return redisAvailable ? redisClient : null;
 };
 
 // Clé Redis pour les refresh tokens
 const getRedisKey = (token) => `refresh_token:${token}`;
-
-// Generate a refresh token
-const generateRefreshToken = async (userId) => {
-  // Create a refresh token with longer expiry
-  const refreshToken = jwt.sign(
-    { userId, type: 'refresh' },
-    config.jwtSecret,
-    { expiresIn: '7d' } // 7 days expiry for refresh token
-  );
-
-  try {
-    const client = getRedis();
-    
-    if (client) {
-      // Stocker dans Redis avec TTL de 7 jours
-      await client.setex(getRedisKey(refreshToken), 7 * 24 * 60 * 60, userId.toString());
-      logger.info('Refresh token stored in Redis', { userId });
-    } else {
-      throw new Error('Redis not available');
-    }
-  } catch (redisError) {
-    // Fallback mémoire si Redis indisponible
-    memoryFallback.set(refreshToken, {
-      userId: userId.toString(),
-      expires: Date.now() + (7 * 24 * 60 * 60 * 1000)
-    });
-    logger.info('Refresh token stored in memory fallback', { userId });
-    // Nettoyer les tokens expirés du fallback
-    cleanExpiredMemoryTokens();
-  }
-
-  return refreshToken;
-};
 
 // Nettoyer les tokens expirés du fallback mémoire
 const cleanExpiredMemoryTokens = () => {
@@ -101,6 +119,40 @@ const cleanExpiredMemoryTokens = () => {
   }
 };
 
+// Generate a refresh token
+const generateRefreshToken = async (userId) => {
+  // Create a refresh token with longer expiry
+  const refreshToken = jwt.sign(
+    { userId, type: 'refresh' },
+    config.jwtSecret,
+    { expiresIn: '7d' } // 7 days expiry for refresh token
+  );
+
+  try {
+    const client = await getRedis();
+
+    if (client) {
+      // Stocker dans Redis avec TTL de 7 jours
+      await client.setex(getRedisKey(refreshToken), 7 * 24 * 60 * 60, userId.toString());
+      logger.debug('Refresh token stored in Redis', { userId });
+    } else {
+      // Pas de Redis, utiliser le fallback mémoire directement
+      throw new Error('Redis not available');
+    }
+  } catch (redisError) {
+    // Fallback mémoire si Redis indisponible
+    memoryFallback.set(refreshToken, {
+      userId: userId.toString(),
+      expires: Date.now() + (7 * 24 * 60 * 60 * 1000)
+    });
+    logger.debug('Refresh token stored in memory fallback', { userId });
+    // Nettoyer les tokens expirés du fallback
+    cleanExpiredMemoryTokens();
+  }
+
+  return refreshToken;
+};
+
 // Verify a refresh token
 const verifyRefreshToken = async (token) => {
   try {
@@ -108,13 +160,13 @@ const verifyRefreshToken = async (token) => {
     if (decoded.type !== 'refresh') {
       throw new Error('Invalid token type');
     }
-    
+
     let userId = null;
     let source = 'none';
-    
+
     try {
-      const client = getRedis();
-      
+      const client = await getRedis();
+
       if (client) {
         // Vérifier dans Redis
         userId = await client.get(getRedisKey(token));
@@ -123,7 +175,7 @@ const verifyRefreshToken = async (token) => {
     } catch (redisError) {
       // Redis error - will fallback to memory
     }
-    
+
     // Si pas trouvé dans Redis ou Redis indisponible, vérifier le fallback
     if (!userId) {
       const data = memoryFallback.get(token);
@@ -132,12 +184,12 @@ const verifyRefreshToken = async (token) => {
         source = 'memory';
       }
     }
-    
+
     if (!userId) {
       logger.debug('Refresh token not found', { userId: decoded.userId, tokenPreview: token.substring(0, 20) + '...' });
       throw new Error('Refresh token not found or expired');
     }
-    
+
     logger.debug('Refresh token verified', { userId, source });
     return { ...decoded, userId: parseInt(userId) };
   } catch (error) {
@@ -156,12 +208,30 @@ const verifyRefreshToken = async (token) => {
 // Middleware to handle token refresh
 const handleTokenRefresh = async (req, res, next) => {
   const refreshToken = req.cookies.refresh_token;
+  const accessToken = req.cookies.session_token;
 
+  // 🔧 CAS 1: Access token valide présent - ne rien faire, laisser authenticateToken gérer
+  if (accessToken) {
+    try {
+      // Vérifier si le token est encore valide
+      jwt.verify(accessToken, config.jwtSecret);
+      // Token valide, ne pas interférer
+      return next();
+    } catch (accessError) {
+      // Token invalide ou expiré - continuer pour essayer de rafraîchir
+      logger.debug('Access token invalid/expired, attempting refresh', {
+        error: accessError.name,
+        path: req.path
+      });
+    }
+  }
+
+  // 🔧 CAS 2: Pas de refresh token - continuer normalement (authenticateToken va gérer l'erreur)
   if (!refreshToken) {
-    // No refresh token, continue with normal flow
     return next();
   }
 
+  // 🔧 CAS 3: Rafraîchissement automatique du token
   try {
     // Verify the refresh token
     const decoded = await verifyRefreshToken(refreshToken);
@@ -178,7 +248,10 @@ const handleTokenRefresh = async (req, res, next) => {
     const sessionUtils = require('../utils/session');
     const { token: newAccessToken, cookieOptions } = await sessionUtils.generateSecureSessionCookie(decoded.userId);
 
-    // Send new access token in response header
+    // Set the new access token as cookie
+    res.cookie('session_token', newAccessToken, cookieOptions);
+
+    // Send new access token in response header pour le frontend
     res.setHeader('X-New-Access-Token', newAccessToken);
 
     // Update the access token in the request for downstream middleware
@@ -188,16 +261,17 @@ const handleTokenRefresh = async (req, res, next) => {
     logger.info('Access token refreshed automatically', {
       userId: decoded.userId,
       userAgent: req.get('User-Agent'),
-      ip: req.ip
+      ip: req.ip,
+      path: req.path
     });
 
     next();
   } catch (error) {
-    logger.debug('Token refresh skipped (will be handled by endpoint if needed)', {
+    logger.debug('Token refresh failed', {
       error: error.message,
       path: req.path
     });
-    
+
     // 🛑 NE PAS supprimer le refresh token ici !
     // Le endpoint /api/auth/refresh-token en a besoin
     // Continue with normal flow - authentication middleware will handle lack of valid access token
@@ -209,7 +283,7 @@ const handleTokenRefresh = async (req, res, next) => {
 const refreshAccessToken = async (req, res) => {
   const refreshToken = req.cookies.refresh_token;
 
-  logger.debug('Refresh token endpoint called', { 
+  logger.debug('Refresh token endpoint called', {
     hasCookie: !!refreshToken,
     cookies: Object.keys(req.cookies || {})
   });
@@ -241,10 +315,10 @@ const refreshAccessToken = async (req, res) => {
 
     // Generate new refresh token to prevent reuse (token rotation)
     const newRefreshToken = await generateRefreshToken(decoded.userId);
-    
+
     // Revoke old refresh token
     await revokeRefreshToken(refreshToken);
-    
+
     // Set new refresh token as cookie avec options sécurisées
     const isProduction = config.nodeEnv === 'production';
     res.cookie('refresh_token', newRefreshToken, {
@@ -275,7 +349,7 @@ const refreshAccessToken = async (req, res) => {
     });
 
     await revokeRefreshToken(refreshToken);
-    
+
     return res.status(403).json({
       success: false,
       message: 'Invalid or expired refresh token'
@@ -286,10 +360,10 @@ const refreshAccessToken = async (req, res) => {
 // Middleware to revoke refresh token (logout)
 const revokeRefreshToken = async (token) => {
   if (!token) return;
-  
+
   try {
-    const client = getRedis();
-    
+    const client = await getRedis();
+
     if (client) {
       await client.del(getRedisKey(token));
     } else {
@@ -305,11 +379,11 @@ const revokeRefreshToken = async (token) => {
 // Middleware pour révoquer le token lors du logout
 const revokeRefreshTokenMiddleware = async (req, res, next) => {
   const refreshToken = req.cookies.refresh_token;
-  
+
   if (refreshToken) {
     await revokeRefreshToken(refreshToken);
   }
-  
+
   next();
 };
 

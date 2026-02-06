@@ -10,6 +10,7 @@ const { sanitizeForLog, suspiciousActivityDetector } = require('./utils/security
 const apiRoutes = require('./routes/api');
 const authRoutes = require('./routes/auth');
 const gamesPublicRoutes = require('./routes/games-public');
+const budgetRoutes = require('./routes/budget');
 
 // Import middleware
 const { limiter, securityHeaders, additionalSecurityHeaders, preventParamPollution } = require('./middleware/security');
@@ -296,6 +297,7 @@ app.use(handleTokenRefresh);
 app.use('/api/auth', authRoutes);
 app.use('/api', apiRoutes);
 app.use('/api/games', gamesPublicRoutes);
+app.use('/api/budget', budgetRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

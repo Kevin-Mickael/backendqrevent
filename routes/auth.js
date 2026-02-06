@@ -3,7 +3,7 @@ const { celebrate, Segments } = require('celebrate');
 const Joi = require('joi');
 const { authenticateToken } = require('../middleware/auth');
 // 🛡️ Utiliser le rateLimiter dédié pour éviter les conflits avec security.js
-const { authLimiter } = require('../middleware/rateLimiter');
+const { authLimiter, generalLimiter } = require('../middleware/rateLimiter');
 const { dashboardLimiter } = require('../middleware/security');
 const { userProfileCache, autoInvalidateCache } = require('../middleware/cacheMiddleware');
 const { register, login, getProfile, updateProfile, logout } = require('../controllers/authController');
@@ -49,6 +49,49 @@ router.post('/login', authLimiter, authValidation.login, login);
 // Logout nécessite d'être authentifié mais pas de rate limiting strict
 // car l'utilisateur est déjà connecté
 router.post('/logout', authenticateToken, logout);
+
+// ============================================
+// Route de vérification de session - ne redirige pas, retourne simplement le statut
+// ============================================
+router.get('/session', generalLimiter, async (req, res) => {
+  try {
+    const token = req.cookies.session_token;
+    
+    if (!token) {
+      return res.json({
+        success: true,
+        authenticated: false,
+        message: 'No session token'
+      });
+    }
+
+    // Vérifier le token
+    const jwt = require('jsonwebtoken');
+    const config = require('../config/config');
+    
+    try {
+      const decoded = jwt.verify(token, config.jwtSecret);
+      return res.json({
+        success: true,
+        authenticated: true,
+        userId: decoded.userId
+      });
+    } catch (tokenError) {
+      // Token invalide ou expiré - ne pas rediriger, juste informer
+      return res.json({
+        success: true,
+        authenticated: false,
+        message: 'Session expired',
+        canRefresh: !!req.cookies.refresh_token
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
 
 // ============================================
 // Protected routes - rate limiting pour éviter les appels excessifs

@@ -12,6 +12,11 @@ const setAuthErrorHeaders = (res) => {
 // Authentication middleware
 const authenticateToken = async (req, res, next) => {
   try {
+    // 🔧 SI handleTokenRefresh a déjà authentifié l'utilisateur, ne pas re-vérifier
+    if (req.user) {
+      return next();
+    }
+
     // Get token from cookie
     const token = req.cookies.session_token;
 
