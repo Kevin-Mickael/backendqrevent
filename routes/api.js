@@ -1456,6 +1456,8 @@ router.post('/families', authenticateToken, familyValidationSchema.create, async
 // PUT /api/families/:familyId - Update a family
 router.put('/families/:familyId', authenticateToken, familyValidationSchema.update, async (req, res) => {
   try {
+    console.log(`🔄 UPDATE Family ${req.params.familyId} - Data received:`, JSON.stringify(req.body, null, 2));
+    
     const family = await families.findById(req.params.familyId);
     if (!family || family.user_id !== req.user.id) {
       return res.status(404).json({
@@ -1463,12 +1465,62 @@ router.put('/families/:familyId', authenticateToken, familyValidationSchema.upda
         message: 'Family not found'
       });
     }
+    
+    console.log(`📋 Current family data:`, JSON.stringify(family, null, 2));
+    
     const updatedFamily = await families.update(req.params.familyId, req.body);
+    
+    console.log(`✅ Updated family data:`, JSON.stringify(updatedFamily, null, 2));
+    
+    // 🔧 SYNC: Update invited_count in qr_codes table if max_people changed
+    console.log(`🔍 SYNC CHECK: req.body.max_people=${req.body.max_people}, family.max_people=${family.max_people}, equal=${req.body.max_people === family.max_people}`);
+    
+    // 🔍 DEBUG: Show current QR codes for this family
+    try {
+      const { supabaseService } = require('../config/supabase');
+      const { data: currentQrCodes, error: qrError } = await supabaseService
+        .from('qr_codes')
+        .select('id, code, family_id, event_id, invited_count, created_at, is_valid')
+        .eq('family_id', req.params.familyId);
+      
+      if (qrError) {
+        console.error('❌ Error fetching current QR codes:', qrError);
+      } else {
+        console.log(`📋 Current QR codes for family:`, JSON.stringify(currentQrCodes, null, 2));
+      }
+    } catch (debugError) {
+      console.error('❌ Error in QR debug fetch:', debugError);
+    }
+    
+    if (req.body.max_people && req.body.max_people !== family.max_people) {
+      try {
+        console.log(`🔄 Syncing QR codes invited_count from ${family.max_people} to ${req.body.max_people}`);
+        
+        const { supabaseService } = require('../config/supabase');
+        
+        // Try simple update first (most reliable)
+        const { error: simpleError } = await supabaseService
+          .from('qr_codes')
+          .update({ invited_count: req.body.max_people })
+          .eq('family_id', req.params.familyId);
+        
+        if (simpleError) {
+          console.error('❌ Error syncing QR codes:', simpleError);
+        } else {
+          console.log(`✅ QR codes invited_count synced successfully`);
+        }
+      } catch (syncError) {
+        console.error('❌ Error in QR sync process:', syncError);
+        // Don't fail the request, just log the error - family update should still work
+      }
+    }
+    
     res.json({
       success: true,
       data: updatedFamily
     });
   } catch (error) {
+    console.error('❌ Error updating family:', error);
     logger.error('Error updating family:', { error: error.message });
     res.status(500).json({
       success: false,
@@ -2779,8 +2831,9 @@ router.get('/public/invitation/:qrCode', async (req, res) => {
       });
     }
 
-    // Increment scan count
-    await familyInvitations.incrementScan(invitation.id);
+    // Increment scan count (check if this comes from qr_codes table)
+    const sourceTable = invitation._source_table === 'qr_codes' ? 'qr_codes' : null;
+    await familyInvitations.incrementScan(invitation.id, sourceTable);
 
     // Get existing RSVP responses
     const rsvpResponses = await familyRsvp.findByInvitation(invitation.id);
