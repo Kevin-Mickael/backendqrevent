@@ -11,6 +11,8 @@ const apiRoutes = require('./routes/api');
 const authRoutes = require('./routes/auth');
 const gamesPublicRoutes = require('./routes/games-public');
 const budgetRoutes = require('./routes/budget');
+const messageRoutes = require('./routes/messages');
+const galleryRoutes = require('./routes/gallery');
 
 // Import middleware
 const { limiter, securityHeaders, additionalSecurityHeaders, preventParamPollution } = require('./middleware/security');
@@ -298,6 +300,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api', apiRoutes);
 app.use('/api/games', gamesPublicRoutes);
 app.use('/api/budget', budgetRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/gallery', galleryRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -379,6 +383,18 @@ app.use((err, req, res, next) => {
 // Start server
 const startServer = async () => {
   try {
+    // Run migrations automatically on startup
+    try {
+      const { executeMigration } = require('./scripts/run-migration');
+      logger.info('Running database migrations on startup...');
+      await executeMigration('021_add_guest_count_to_events.sql');
+      await executeMigration('027_ensure_max_people_column.sql');
+      logger.info('Database migrations completed successfully');
+    } catch (migrationError) {
+      logger.warn('Migration check completed (may already be applied):', migrationError.message);
+      // Continue even if migration fails - it might already be applied
+    }
+
     // Start the server
     server = app.listen(config.port, () => {
       logger.info(`Qrevent backend server running on port ${config.port} in ${config.nodeEnv} mode`);
@@ -411,4 +427,5 @@ process.on('uncaughtException', (err) => {
 
 startServer();
 
-module.exports = app;
+module.exports = app;/* Migration trigger */
+/* Trigger restart after migration 028 */

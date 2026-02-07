@@ -1,4 +1,4 @@
-const { qrCodes, guests, events, users, families } = require('../utils/database');
+const { qrCodes, guests, events, users, families, familyInvitations } = require('../utils/database');
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
 const config = require('../config/config');
@@ -64,15 +64,13 @@ const createQRCodeForGuest = async (eventId, guestId, userId) => {
       qrCode = generateSecureQRCode();
 
       // Check if QR code already exists
-      try {
-        await qrCodes.findByCode(qrCode);
-      } catch (error) {
-        // If QR code doesn't exist, it means it's unique
-        if (error.message.includes('Row not found')) {
-          isUnique = true;
-        } else {
-          throw error;
-        }
+      const existingQR = await qrCodes.findByCode(qrCode);
+      if (existingQR) {
+        // QR code already exists, try again
+        isUnique = false;
+      } else {
+        // QR code doesn't exist, it's unique
+        isUnique = true;
       }
       attempts++;
     }
@@ -168,6 +166,12 @@ const createQRCodeForFamily = async (eventId, familyId, userId, invitedCount) =>
     if (!family) throw new Error('Family not found');
     if (!user) throw new Error('User not found');
 
+    // Validate invitedCount does not exceed max_people
+    const maxPeople = family.max_people || family.members?.length || 1;
+    if (invitedCount > maxPeople) {
+      throw new Error(`Invited count (${invitedCount}) exceeds maximum allowed (${maxPeople}) for this family`);
+    }
+
     // Generate unique QR code
     let qrCode;
     let isUnique = false;
@@ -177,14 +181,14 @@ const createQRCodeForFamily = async (eventId, familyId, userId, invitedCount) =>
     while (!isUnique && attempts < maxAttempts) {
       qrCode = generateSecureQRCode();
 
-      try {
-        await qrCodes.findByCode(qrCode);
-      } catch (error) {
-        if (error.message.includes('Row not found')) {
-          isUnique = true;
-        } else {
-          throw error;
-        }
+      // Check if QR code already exists
+      const existingQR = await qrCodes.findByCode(qrCode);
+      if (existingQR) {
+        // QR code already exists, try again
+        isUnique = false;
+      } else {
+        // QR code doesn't exist, it's unique
+        isUnique = true;
       }
       attempts++;
     }
@@ -209,13 +213,47 @@ const createQRCodeForFamily = async (eventId, familyId, userId, invitedCount) =>
 
     const savedQRCode = await qrCodes.create(qrCodeData);
 
+    // Check if family invitation already exists for this family/event
+    let savedFamilyInvitation;
+    try {
+      const existingInvitation = await familyInvitations.findByFamily(familyId);
+      const familyEventInvitation = existingInvitation.find(inv => inv.event_id === eventId);
+      
+      if (familyEventInvitation) {
+        // Update existing invitation with this QR code if needed
+        savedFamilyInvitation = await familyInvitations.update(familyEventInvitation.id, {
+          qr_code: qrCode,
+          qr_expires_at: expiresAt.toISOString(),
+          invited_count: Math.max(familyEventInvitation.invited_count, invitedCount)
+        });
+      } else {
+        // Create new family invitation record
+        const familyInvitationData = {
+          family_id: familyId,
+          event_id: eventId,
+          user_id: userId,
+          invited_count: invitedCount,
+          qr_code: qrCode,
+          qr_expires_at: expiresAt.toISOString(),
+          is_valid: true,
+          scan_count: 0
+        };
+        savedFamilyInvitation = await familyInvitations.create(familyInvitationData);
+      }
+    } catch (error) {
+      console.error('Error managing family invitation:', error);
+      // Continue without family invitation if there's an error
+      savedFamilyInvitation = { id: null };
+    }
+
     return {
       success: true,
       qrCode: savedQRCode.code,
       expiresAt: savedQRCode.expires_at,
       familyId: savedQRCode.family_id,
       eventId: savedQRCode.event_id,
-      invitedCount: invitedCount
+      invitedCount: invitedCount,
+      invitationId: savedFamilyInvitation.id
     };
   } catch (error) {
     console.error('Error creating QR code for family:', error);
@@ -233,15 +271,7 @@ const validateQRCode = async (qrCode) => {
     }
 
     // Find the QR code document
-    let qrCodeDoc;
-    try {
-      qrCodeDoc = await qrCodes.findByCode(qrCode);
-    } catch (error) {
-      return {
-        success: false,
-        message: 'Invalid or expired QR code'
-      };
-    }
+    const qrCodeDoc = await qrCodes.findByCode(qrCode);
 
     if (!qrCodeDoc) {
       return {
@@ -357,12 +387,7 @@ const generateQRCodeBatch = async (eventId, userId) => {
  */
 const refreshQRCode = async (qrCode, hoursToAdd = config.qrCodeExpirationHours) => {
   try {
-    let qrCodeDoc;
-    try {
-      qrCodeDoc = await qrCodes.findByCode(qrCode);
-    } catch (error) {
-      throw new Error('QR code not found or invalid');
-    }
+    const qrCodeDoc = await qrCodes.findByCode(qrCode);
 
     if (!qrCodeDoc || !qrCodeDoc.is_valid) {
       throw new Error('QR code not found or invalid');

@@ -93,6 +93,21 @@ const qrCodeDb = {
     }
 
     return data;
+  },
+
+  // Find all QR codes with family_id (family QR codes)
+  findByFamily: async () => {
+    const { data, error } = await supabaseService
+      .from('qr_codes')
+      .select('*')
+      .not('family_id', 'is', null)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new Error(`Error finding family QR codes: ${error.message}`);
+    }
+
+    return data || [];
   }
 };
 

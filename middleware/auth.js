@@ -72,7 +72,11 @@ const authenticateToken = async (req, res, next) => {
     }
 
     // Attach user to request object
-    req.user = user;
+    // Ensure ID is a string for consistent comparison
+    req.user = {
+      ...user,
+      id: String(user.id).trim()
+    };
     next();
   } catch (error) {
     console.error('Authentication error:', error);

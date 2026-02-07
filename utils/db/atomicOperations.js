@@ -61,6 +61,48 @@ async function softDeleteEventIfOwner(eventId, userId) {
         throw new Error('Event ID and User ID are required');
     }
 
+    console.log('[softDeleteEventIfOwner] Attempting to delete event:', { eventId, userId });
+
+    // First, check if the event exists and get its current state
+    const { data: existingEvents, error: fetchError } = await supabaseService
+        .from('events')
+        .select('id, organizer_id, is_active, title')
+        .eq('id', eventId)
+        .limit(1);
+
+    if (fetchError) {
+        console.log('[softDeleteEventIfOwner] Database error fetching event:', { eventId, error: fetchError.message });
+        throw new Error('Event not found or you do not have permission to delete it');
+    }
+
+    if (!existingEvents || existingEvents.length === 0) {
+        console.log('[softDeleteEventIfOwner] Event not found:', { eventId });
+        throw new Error('Event not found or you do not have permission to delete it');
+    }
+
+    const existingEvent = existingEvents[0];
+    console.log('[softDeleteEventIfOwner] Found event:', existingEvent);
+
+    // Compare as strings to handle different UUID formats
+    const eventOrganizerId = String(existingEvent.organizer_id).trim();
+    const requestUserId = String(userId).trim();
+    
+    if (eventOrganizerId !== requestUserId) {
+        console.log('[softDeleteEventIfOwner] Permission denied - organizer_id mismatch:', {
+            eventOrganizerId,
+            requestUserId,
+            match: eventOrganizerId === requestUserId
+        });
+        throw new Error('Event not found or you do not have permission to delete it');
+    }
+
+    if (!existingEvent.is_active) {
+        console.log('[softDeleteEventIfOwner] Event already inactive:', { eventId });
+        // Consider this a success since the event is already "deleted"
+        return existingEvent;
+    }
+
+    // Perform the soft delete
     const { data, error } = await supabaseService
         .from('events')
         .update({ 
@@ -70,21 +112,20 @@ async function softDeleteEventIfOwner(eventId, userId) {
         .eq('id', eventId)
         .eq('organizer_id', userId)
         .eq('is_active', true)
-        .select()
-        .single();
+        .select();
 
     if (error) {
-        if (error.code === 'PGRST116') {
-            throw new Error('Event not found or you do not have permission to delete it');
-        }
+        console.log('[softDeleteEventIfOwner] Update error:', { error: error.message, code: error.code });
         throw new Error(`Error deleting event: ${error.message}`);
     }
 
-    if (!data) {
+    if (!data || data.length === 0) {
+        console.log('[softDeleteEventIfOwner] No rows updated - event may have been modified concurrently');
         throw new Error('Event not found or you do not have permission to delete it');
     }
 
-    return data;
+    console.log('[softDeleteEventIfOwner] Event deleted successfully:', { eventId });
+    return data[0];
 }
 
 /**

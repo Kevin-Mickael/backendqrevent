@@ -4,6 +4,13 @@ const { supabaseService } = require('../../config/supabase');
 const eventDb = {
   // Create a new event
   create: async (eventData) => {
+    console.log('[events.create] Creating event with data:', {
+      title: eventData.title,
+      hasDescription: !!eventData.description,
+      date: eventData.date,
+      organizer_id: eventData.organizer_id
+    });
+    
     const { data, error } = await supabaseService
       .from('events')
       .insert([eventData])
@@ -11,7 +18,12 @@ const eventDb = {
       .single();
 
     if (error) {
-      throw new Error(`Error creating event: ${error.message}`);
+      console.error('[events.create] Supabase error:', {
+        code: error.code,
+        message: error.message,
+        details: error.details
+      });
+      throw new Error(`Error creating event: ${error.message} (code: ${error.code})`);
     }
 
     return data;

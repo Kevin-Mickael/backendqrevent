@@ -159,9 +159,42 @@ class ImageService {
     }
 
     /**
+     * Optimize an image for gallery use
+     * Resizes to 1920x1920 max, converts to WebP, quality 90 for high quality gallery photos
+     * @param {Buffer} buffer - The image buffer
+     * @returns {Promise<{buffer: Buffer, mimetype: string, extension: string}>}
+     */
+    async optimizeGalleryImage(buffer) {
+        try {
+            if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
+                throw new Error('Invalid or empty image buffer');
+            }
+
+            const optimizedBuffer = await sharp(buffer, { failOnError: false })
+                .resize({
+                    width: 1920,
+                    height: 1920,
+                    fit: 'inside',
+                    withoutEnlargement: true
+                })
+                .webp({ quality: 90 })
+                .toBuffer();
+
+            return {
+                buffer: optimizedBuffer,
+                mimetype: 'image/webp',
+                extension: '.webp'
+            };
+        } catch (error) {
+            console.error('Gallery image optimization error:', error);
+            throw new Error('Failed to optimize gallery image: ' + error.message);
+        }
+    }
+
+    /**
      * Optimize an image based on its intended use
      * @param {Buffer} buffer - The image buffer
-     * @param {string} usage - The intended usage ('avatar', 'cover', 'banner', 'general')
+     * @param {string} usage - The intended usage ('avatar', 'cover', 'banner', 'general', 'gallery')
      * @returns {Promise<{buffer: Buffer, mimetype: string, extension: string}>}
      */
     async optimizeImageByUsage(buffer, usage = 'general') {
@@ -172,6 +205,8 @@ class ImageService {
                 return await this.optimizeCoverImage(buffer);
             case 'banner':
                 return await this.optimizeBannerImage(buffer);
+            case 'gallery':
+                return await this.optimizeGalleryImage(buffer);
             case 'general':
             default:
                 return await this.optimizeGeneralImage(buffer);

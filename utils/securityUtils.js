@@ -98,7 +98,7 @@ const sanitizeString = (input, maxLength = 1000) => {
  */
 const sanitizeEventData = (data) => {
   const allowedFields = [
-    'title', 'description', 'date', 'location', 
+    'title', 'description', 'guest_count', 'date', 'location', 
     'cover_image', 'banner_image', 'settings', 'is_active'
   ];
   
@@ -110,6 +110,13 @@ const sanitizeEventData = (data) => {
         case 'title':
         case 'description':
           sanitized[field] = sanitizeString(data[field], 2000);
+          break;
+        case 'guest_count':
+          // Valider que c'est un nombre entier entre 1 et 1000
+          const guestCount = parseInt(data[field], 10);
+          sanitized[field] = !isNaN(guestCount) && guestCount >= 1 && guestCount <= 1000 
+            ? guestCount 
+            : null;
           break;
         case 'date':
           // Valider que c'est une date valide

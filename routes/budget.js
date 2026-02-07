@@ -167,15 +167,20 @@ router.get('/event/:eventId',
             const userId = req.user.id;
             const { eventId } = req.params;
 
-            // Vérifier que l'utilisateur a accès à cet événement
+            // Vérifier que l'utilisateur a accès à cet événement (organizer_id OU user_id)
             const { data: event, error: eventError } = await supabase
                 .from('events')
                 .select('id')
                 .eq('id', eventId)
-                .eq('organizer_id', userId)
+                .or(`organizer_id.eq.${userId},user_id.eq.${userId}`)
                 .single();
 
             if (eventError || !event) {
+                console.warn('[Budget] Access denied - Event not found or user not organizer:', {
+                    eventId,
+                    userId,
+                    error: eventError?.message
+                });
                 return res.status(403).json({
                     success: false,
                     message: 'Accès non autorisé à cet événement'
@@ -186,7 +191,6 @@ router.get('/event/:eventId',
                 .from('budget_items')
                 .select('*')
                 .eq('event_id', eventId)
-                .eq('user_id', userId)
                 .order('created_at', { ascending: false });
 
             if (error) {
@@ -271,15 +275,20 @@ router.post('/items',
                 unit_price
             } = req.body;
 
-            // Vérifier que l'utilisateur a accès à cet événement
+            // Vérifier que l'utilisateur a accès à cet événement (organizer_id OU user_id)
             const { data: event, error: eventError } = await supabase
                 .from('events')
                 .select('id')
                 .eq('id', event_id)
-                .eq('organizer_id', userId)
+                .or(`organizer_id.eq.${userId},user_id.eq.${userId}`)
                 .single();
 
             if (eventError || !event) {
+                console.warn('[Budget] Create access denied - Event not found or user not organizer:', {
+                    eventId: event_id,
+                    userId,
+                    error: eventError?.message
+                });
                 return res.status(403).json({
                     success: false,
                     message: 'Accès non autorisé à cet événement'
@@ -479,15 +488,20 @@ router.get('/stats/:eventId', authenticateToken, generalLimiter, async (req, res
         const userId = req.user.id;
         const { eventId } = req.params;
 
-        // Vérifier l'accès à l'événement
+        // Vérifier l'accès à l'événement (organizer_id OU user_id)
         const { data: event, error: eventError } = await supabase
             .from('events')
             .select('id, total_budget')
             .eq('id', eventId)
-            .eq('organizer_id', userId)
+            .or(`organizer_id.eq.${userId},user_id.eq.${userId}`)
             .single();
 
         if (eventError || !event) {
+            console.warn('[Budget] Stats access denied - Event not found or user not organizer:', {
+                eventId,
+                userId,
+                error: eventError?.message
+            });
             return res.status(403).json({
                 success: false,
                 message: 'Accès non autorisé à cet événement'
@@ -497,8 +511,7 @@ router.get('/stats/:eventId', authenticateToken, generalLimiter, async (req, res
         const { data: items, error } = await supabase
             .from('budget_items')
             .select('*')
-            .eq('event_id', eventId)
-            .eq('user_id', userId);
+            .eq('event_id', eventId);
 
         if (error) {
             logger.error('Error fetching budget stats:', error);
@@ -610,7 +623,7 @@ router.put('/event/:eventId/total', authenticateToken, generalLimiter, async (re
             .from('events')
             .update({ total_budget })
             .eq('id', eventId)
-            .eq('organizer_id', userId)
+            .or(`organizer_id.eq.${userId},user_id.eq.${userId}`)
             .select()
             .single();
 
@@ -647,15 +660,20 @@ router.get('/export/:eventId', authenticateToken, generalLimiter, async (req, re
         const { eventId } = req.params;
         const { format = 'json' } = req.query;
 
-        // Vérifier l'accès à l'événement
+        // Vérifier l'accès à l'événement (organizer_id OU user_id)
         const { data: event, error: eventError } = await supabase
             .from('events')
             .select('id, title, date')
             .eq('id', eventId)
-            .eq('organizer_id', userId)
+            .or(`organizer_id.eq.${userId},user_id.eq.${userId}`)
             .single();
 
         if (eventError || !event) {
+            console.warn('[Budget] Export access denied - Event not found or user not organizer:', {
+                eventId,
+                userId,
+                error: eventError?.message
+            });
             return res.status(403).json({
                 success: false,
                 message: 'Accès non autorisé à cet événement'
@@ -666,7 +684,6 @@ router.get('/export/:eventId', authenticateToken, generalLimiter, async (req, re
             .from('budget_items')
             .select('*')
             .eq('event_id', eventId)
-            .eq('user_id', userId)
             .order('category', { ascending: true });
 
         if (error) {
@@ -744,6 +761,287 @@ router.get('/export/:eventId', authenticateToken, generalLimiter, async (req, re
         });
     } catch (error) {
         logger.error('Export budget error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erreur serveur'
+        });
+    }
+});
+
+/**
+ * @route GET /api/budget/items/:itemId/details
+ * @desc Récupérer les détails d'un item budget
+ * @access Private
+ */
+router.get('/items/:itemId/details', authenticateToken, generalLimiter, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { itemId } = req.params;
+
+        // Vérifier que l'item appartient à l'utilisateur
+        const { data: item, error: itemError } = await supabase
+            .from('budget_items')
+            .select('id')
+            .eq('id', itemId)
+            .eq('user_id', userId)
+            .single();
+
+        if (itemError || !item) {
+            return res.status(403).json({
+                success: false,
+                message: 'Accès non autorisé à cette dépense'
+            });
+        }
+
+        const { data: details, error } = await supabase
+            .from('budget_item_details')
+            .select('*')
+            .eq('budget_item_id', itemId)
+            .eq('is_active', true)
+            .order('sort_order', { ascending: true });
+
+        if (error) {
+            logger.error('Error fetching budget item details:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Erreur lors de la récupération des détails'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: details || []
+        });
+    } catch (error) {
+        logger.error('Get budget item details error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erreur serveur'
+        });
+    }
+});
+
+/**
+ * @route POST /api/budget/items/:itemId/details
+ * @desc Créer un nouveau détail pour un item budget
+ * @access Private
+ */
+router.post('/items/:itemId/details', authenticateToken, generalLimiter, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { itemId } = req.params;
+        const { location, price, notes, sort_order } = req.body;
+
+        // Vérifier que l'item appartient à l'utilisateur
+        const { data: item, error: itemError } = await supabase
+            .from('budget_items')
+            .select('id, actual_amount')
+            .eq('id', itemId)
+            .eq('user_id', userId)
+            .single();
+
+        if (itemError || !item) {
+            return res.status(403).json({
+                success: false,
+                message: 'Accès non autorisé à cette dépense'
+            });
+        }
+
+        // Créer le détail
+        const { data: detail, error } = await supabase
+            .from('budget_item_details')
+            .insert({
+                budget_item_id: itemId,
+                location: sanitizeInput(location),
+                price: parseFloat(price) || 0,
+                notes: sanitizeInput(notes),
+                sort_order: sort_order || 0,
+                is_active: true
+            })
+            .select()
+            .single();
+
+        if (error) {
+            logger.error('Error creating budget item detail:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Erreur lors de la création du détail'
+            });
+        }
+
+        // Mettre à jour le montant actual_amount de l'item budget
+        const { data: allDetails } = await supabase
+            .from('budget_item_details')
+            .select('price')
+            .eq('budget_item_id', itemId)
+            .eq('is_active', true);
+
+        const totalDetailsPrice = (allDetails || []).reduce((sum, d) => sum + (parseFloat(d.price) || 0), 0);
+
+        await supabase
+            .from('budget_items')
+            .update({ actual_amount: totalDetailsPrice })
+            .eq('id', itemId);
+
+        logger.info(`Budget item detail created: ${detail.id} for item ${itemId} by user ${userId}`);
+
+        res.status(201).json({
+            success: true,
+            data: detail,
+            message: 'Détail ajouté avec succès'
+        });
+    } catch (error) {
+        logger.error('Create budget item detail error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erreur serveur'
+        });
+    }
+});
+
+/**
+ * @route PUT /api/budget/items/:itemId/details/:detailId
+ * @desc Mettre à jour un détail d'item budget
+ * @access Private
+ */
+router.put('/items/:itemId/details/:detailId', authenticateToken, generalLimiter, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { itemId, detailId } = req.params;
+        const { location, price, notes, sort_order, is_active } = req.body;
+
+        // Vérifier que l'item appartient à l'utilisateur
+        const { data: item, error: itemError } = await supabase
+            .from('budget_items')
+            .select('id')
+            .eq('id', itemId)
+            .eq('user_id', userId)
+            .single();
+
+        if (itemError || !item) {
+            return res.status(403).json({
+                success: false,
+                message: 'Accès non autorisé à cette dépense'
+            });
+        }
+
+        // Préparer les données à mettre à jour
+        const updateData = {};
+        if (location !== undefined) updateData.location = sanitizeInput(location);
+        if (price !== undefined) updateData.price = parseFloat(price) || 0;
+        if (notes !== undefined) updateData.notes = sanitizeInput(notes);
+        if (sort_order !== undefined) updateData.sort_order = sort_order;
+        if (is_active !== undefined) updateData.is_active = is_active;
+
+        const { data: detail, error } = await supabase
+            .from('budget_item_details')
+            .update(updateData)
+            .eq('id', detailId)
+            .eq('budget_item_id', itemId)
+            .select()
+            .single();
+
+        if (error) {
+            logger.error('Error updating budget item detail:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Erreur lors de la mise à jour du détail'
+            });
+        }
+
+        // Recalculer le montant total si le prix a changé
+        if (price !== undefined) {
+            const { data: allDetails } = await supabase
+                .from('budget_item_details')
+                .select('price')
+                .eq('budget_item_id', itemId)
+                .eq('is_active', true);
+
+            const totalDetailsPrice = (allDetails || []).reduce((sum, d) => sum + (parseFloat(d.price) || 0), 0);
+
+            await supabase
+                .from('budget_items')
+                .update({ actual_amount: totalDetailsPrice })
+                .eq('id', itemId);
+        }
+
+        logger.info(`Budget item detail updated: ${detailId} by user ${userId}`);
+
+        res.json({
+            success: true,
+            data: detail,
+            message: 'Détail mis à jour avec succès'
+        });
+    } catch (error) {
+        logger.error('Update budget item detail error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erreur serveur'
+        });
+    }
+});
+
+/**
+ * @route DELETE /api/budget/items/:itemId/details/:detailId
+ * @desc Supprimer un détail d'item budget
+ * @access Private
+ */
+router.delete('/items/:itemId/details/:detailId', authenticateToken, generalLimiter, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { itemId, detailId } = req.params;
+
+        // Vérifier que l'item appartient à l'utilisateur
+        const { data: item, error: itemError } = await supabase
+            .from('budget_items')
+            .select('id')
+            .eq('id', itemId)
+            .eq('user_id', userId)
+            .single();
+
+        if (itemError || !item) {
+            return res.status(403).json({
+                success: false,
+                message: 'Accès non autorisé à cette dépense'
+            });
+        }
+
+        const { error } = await supabase
+            .from('budget_item_details')
+            .delete()
+            .eq('id', detailId)
+            .eq('budget_item_id', itemId);
+
+        if (error) {
+            logger.error('Error deleting budget item detail:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Erreur lors de la suppression du détail'
+            });
+        }
+
+        // Recalculer le montant total
+        const { data: allDetails } = await supabase
+            .from('budget_item_details')
+            .select('price')
+            .eq('budget_item_id', itemId)
+            .eq('is_active', true);
+
+        const totalDetailsPrice = (allDetails || []).reduce((sum, d) => sum + (parseFloat(d.price) || 0), 0);
+
+        await supabase
+            .from('budget_items')
+            .update({ actual_amount: totalDetailsPrice })
+            .eq('id', itemId);
+
+        logger.info(`Budget item detail deleted: ${detailId} by user ${userId}`);
+
+        res.json({
+            success: true,
+            message: 'Détail supprimé avec succès'
+        });
+    } catch (error) {
+        logger.error('Delete budget item detail error:', error);
         res.status(500).json({
             success: false,
             message: 'Erreur serveur'
