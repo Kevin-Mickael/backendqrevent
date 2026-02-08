@@ -5,6 +5,7 @@ const rateLimit = require('express-rate-limit');
 const config = require('./config/config');
 const logger = require('./utils/logger');
 const { sanitizeForLog, suspiciousActivityDetector } = require('./utils/securityUtils');
+const { dbHealthMonitor } = require('./utils/dbHealth');
 
 // Import routes
 const apiRoutes = require('./routes/api');
@@ -13,6 +14,7 @@ const gamesPublicRoutes = require('./routes/games-public');
 const budgetRoutes = require('./routes/budget');
 const messageRoutes = require('./routes/messages');
 const galleryRoutes = require('./routes/gallery');
+const healthRoutes = require('./routes/health');
 
 // Import middleware
 const { limiter, securityHeaders, additionalSecurityHeaders, preventParamPollution } = require('./middleware/security');
@@ -302,6 +304,7 @@ app.use('/api/games', gamesPublicRoutes);
 app.use('/api/budget', budgetRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/gallery', galleryRoutes);
+app.use('/health', healthRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -400,6 +403,9 @@ const startServer = async () => {
       logger.info(`Qrevent backend server running on port ${config.port} in ${config.nodeEnv} mode`);
       console.log(`🚀 Server running on http://localhost:${config.port}`);
       console.log(`📊 Health check: http://localhost:${config.port}/health`);
+      
+      // Start database health monitoring
+      dbHealthMonitor.startMonitoring();
     });
   } catch (error) {
     logger.error('Failed to start server', error);

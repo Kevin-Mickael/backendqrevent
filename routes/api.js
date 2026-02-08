@@ -33,15 +33,30 @@ const eventValidationSchema = {
         Joi.date().required(),
         Joi.string().isoDate().required()
       ),
-      bride_name: Joi.string().optional().max(100),
-      groom_name: Joi.string().optional().max(100),
+      // Partner names (replacing bride_name and groom_name)
+      partner1_name: Joi.string().optional().max(100),
+      partner2_name: Joi.string().optional().max(100),
+      // Legacy location field (kept for backward compatibility)
       location: Joi.object().keys({
-        address: Joi.string().required(),
+        address: Joi.string().optional(),
         coordinates: Joi.object().keys({
           lat: Joi.number(),
           lng: Joi.number()
+        }).optional()
+      }).optional(),
+      
+      // Event schedule structure
+      event_schedule: Joi.array().items(
+        Joi.object().keys({
+          id: Joi.string().required(),
+          name: Joi.string().required().max(100),
+          location: Joi.string().required().max(200),
+          time: Joi.string().pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).required()
         })
-      }),
+      ).optional(),
+      // Partner names
+      partner1_name: Joi.string().optional().max(100),
+      partner2_name: Joi.string().optional().max(100),
       cover_image: Joi.string().uri().optional(),
       banner_image: Joi.string().uri().optional(),
       settings: Joi.object().keys({
@@ -63,15 +78,44 @@ const eventValidationSchema = {
       description: Joi.string().optional().max(1000),
       guest_count: Joi.number().optional().min(1).max(1000),
       date: Joi.date().optional(),
-      bride_name: Joi.string().optional().max(100),
-      groom_name: Joi.string().optional().max(100),
+      // Partner names (replacing bride_name and groom_name)
+      partner1_name: Joi.string().optional().max(100),
+      partner2_name: Joi.string().optional().max(100),
+      // Legacy location field (kept for backward compatibility)
       location: Joi.object().keys({
         address: Joi.string().optional(),
         coordinates: Joi.object().keys({
           lat: Joi.number(),
           lng: Joi.number()
-        })
+        }).optional()
       }).optional(),
+      
+      // New venue structure (all optional for updates)
+      venue_type: Joi.string().valid('single', 'separate').optional(),
+      ceremony_venue: Joi.object().keys({
+        name: Joi.string().optional().max(200),
+        address: Joi.string().optional().max(500),
+        city: Joi.string().optional().max(100),
+        postalCode: Joi.string().optional().max(20),
+        coordinates: Joi.object().keys({
+          lat: Joi.number(),
+          lng: Joi.number()
+        }).optional()
+      }).optional(),
+      reception_venue: Joi.object().keys({
+        name: Joi.string().optional().max(200),
+        address: Joi.string().optional().max(500),
+        city: Joi.string().optional().max(100),
+        postalCode: Joi.string().optional().max(20),
+        coordinates: Joi.object().keys({
+          lat: Joi.number(),
+          lng: Joi.number()
+        }).optional()
+      }).optional(),
+      ceremony_date: Joi.date().optional(),
+      ceremony_time: Joi.string().pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).optional(),
+      reception_date: Joi.date().optional(),
+      reception_time: Joi.string().pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).optional(),
       cover_image: Joi.string().uri().optional(),
       banner_image: Joi.string().uri().optional(),
       settings: Joi.object().keys({
@@ -81,6 +125,15 @@ const eventValidationSchema = {
         enableGuestBook: Joi.boolean(),
         enableQRVerification: Joi.boolean()
       }).optional(),
+      // Event schedule structure
+      event_schedule: Joi.array().items(
+        Joi.object().keys({
+          id: Joi.string().required(),
+          name: Joi.string().required().max(100),
+          location: Joi.string().required().max(200),
+          time: Joi.string().pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).required()
+        })
+      ).optional(),
       is_active: Joi.boolean().optional()
     })
   })
@@ -317,7 +370,7 @@ router.post('/admin/run-migration-guest-count', authenticateToken, authorizeRole
   try {
     const { executeMigration } = require('../scripts/run-migration');
     const success = await executeMigration('021_add_guest_count_to_events.sql');
-    
+
     if (success) {
       res.json({
         success: true,
@@ -343,7 +396,7 @@ router.post('/admin/run-migration-guest-count', authenticateToken, authorizeRole
 router.get('/debug/session', authenticateToken, async (req, res) => {
   try {
     const userEvents = await events.findByOrganizer(req.user.id);
-    
+
     res.json({
       success: true,
       user: {
@@ -374,10 +427,10 @@ router.post('/events', authenticateToken, eventValidationSchema.create, async (r
   try {
     // 🛡️ RÈGLE 3: Le middleware Celebrate valide déjà les données côté backend
     // req.body est maintenant validé et sécurisé par eventValidationSchema.create
-    
+
     // 🛡️ Sanitiser les données pour éviter les injections
     const sanitizedData = sanitizeEventData(req.body);
-    
+
     // 🛡️ RÈGLE 5: Validation date côté backend (pas dans le passé)
     const eventDate = new Date(sanitizedData.date);
     const now = new Date();
@@ -389,21 +442,21 @@ router.post('/events', authenticateToken, eventValidationSchema.create, async (r
         code: 'INVALID_DATE'
       });
     }
-    
+
     // 🛡️ Filtrer les champs autorisés strictement
-    const allowedFields = ['title', 'description', 'guest_count', 'date', 'location', 'cover_image', 'banner_image', 'settings'];
+    const allowedFields = ['title', 'description', 'guest_count', 'date', 'location', 'cover_image', 'banner_image', 'settings', 'partner1_name', 'partner2_name', 'event_schedule'];
     const filteredData = {};
     for (const field of allowedFields) {
       if (sanitizedData[field] !== undefined) {
         filteredData[field] = sanitizedData[field];
       }
     }
-    
+
     // 🛡️ Description par défaut (nullable en DB maintenant)
     if (!filteredData.description) {
       filteredData.description = null;
     }
-    
+
     // 🛡️ RÈGLE 4: Création directe sécurisée (simplifiée pour éviter timeouts)
     const eventData = {
       ...filteredData,
@@ -415,8 +468,8 @@ router.post('/events', authenticateToken, eventValidationSchema.create, async (r
     const event = await events.create(eventData);
 
     // 🛡️ RÈGLE 6: Logs sécurisés sans données sensibles
-    logger.info('Event created successfully', { 
-      eventId: event.id, 
+    logger.info('Event created successfully', {
+      eventId: event.id,
       userId: req.user.id,
       titleLength: filteredData.title?.length || 0,
       guestCount: filteredData.guest_count || 0
@@ -435,7 +488,7 @@ router.post('/events', authenticateToken, eventValidationSchema.create, async (r
       userId: req.user?.id,
       code: error.code || 'UNKNOWN_ERROR'
     });
-    
+
     res.status(500).json({
       success: false,
       message: 'Server error while creating event',
@@ -529,8 +582,8 @@ router.get('/events/:eventId/public', async (req, res) => {
 router.put('/events/:eventId', authenticateToken, eventValidationSchema.update, async (req, res) => {
   try {
     const updatedEvent = await updateEventIfOwner(
-      req.params.eventId, 
-      req.user.id, 
+      req.params.eventId,
+      req.user.id,
       req.body
     );
 
@@ -553,20 +606,20 @@ router.delete('/events/:eventId', authenticateToken, async (req, res) => {
   try {
     const eventId = req.params.eventId;
     const userId = String(req.user.id).trim();
-    
+
     logger.info('DELETE /events/:eventId - Attempting to delete event', {
       eventId,
       userId,
       userEmail: req.user.email
     });
-    
+
     // First, fetch the event to verify ownership
     const { data: eventData, error: fetchError } = await supabaseService
       .from('events')
       .select('id, organizer_id, is_active, title')
       .eq('id', eventId)
       .limit(1);
-    
+
     if (fetchError || !eventData || eventData.length === 0) {
       logger.warn('Event not found for deletion', { eventId, error: fetchError?.message });
       return res.status(404).json({
@@ -574,17 +627,17 @@ router.delete('/events/:eventId', authenticateToken, async (req, res) => {
         message: 'Event not found'
       });
     }
-    
+
     const event = eventData[0];
     const eventOwnerId = String(event.organizer_id).trim();
-    
-    logger.info('Found event for deletion', { 
-      eventId, 
-      eventOwnerId, 
+
+    logger.info('Found event for deletion', {
+      eventId,
+      eventOwnerId,
       requestUserId: userId,
-      match: eventOwnerId === userId 
+      match: eventOwnerId === userId
     });
-    
+
     // Verify ownership
     if (eventOwnerId !== userId) {
       logger.warn('Permission denied - user is not event owner', {
@@ -597,7 +650,7 @@ router.delete('/events/:eventId', authenticateToken, async (req, res) => {
         message: 'You do not have permission to delete this event'
       });
     }
-    
+
     // Check if already deleted
     if (!event.is_active) {
       logger.info('Event already inactive', { eventId });
@@ -606,21 +659,21 @@ router.delete('/events/:eventId', authenticateToken, async (req, res) => {
         message: 'Event already deleted'
       });
     }
-    
+
     // Perform soft delete
     const { error: updateError } = await supabaseService
       .from('events')
-      .update({ 
-        is_active: false, 
-        updated_at: new Date().toISOString() 
+      .update({
+        is_active: false,
+        updated_at: new Date().toISOString()
       })
       .eq('id', eventId)
       .eq('organizer_id', userId);
-    
+
     if (updateError) {
-      logger.error('Error updating event for soft delete', { 
-        error: updateError.message, 
-        eventId 
+      logger.error('Error updating event for soft delete', {
+        error: updateError.message,
+        eventId
       });
       throw new Error('Failed to delete event');
     }
@@ -632,20 +685,20 @@ router.delete('/events/:eventId', authenticateToken, async (req, res) => {
       message: 'Event deleted successfully'
     });
   } catch (error) {
-    logger.error('Error deleting event:', { 
+    logger.error('Error deleting event:', {
       error: error.message,
       eventId: req.params.eventId,
       userId: req.user?.id,
       stack: error.stack
     });
-    
+
     if (error.message.includes('not found') || error.message.includes('permission')) {
       return res.status(404).json({
         success: false,
         message: 'Event not found or you do not have permission to delete it'
       });
     }
-    
+
     res.status(500).json({
       success: false,
       message: 'Server error while deleting event'
@@ -657,7 +710,7 @@ router.delete('/events/:eventId', authenticateToken, async (req, res) => {
 router.post('/events/:eventId/upload-banner', authenticateToken, upload.single('banner'), async (req, res) => {
   try {
     console.log('[BANNER UPLOAD] Starting upload for event:', req.params.eventId);
-    
+
     // 🛡️ SECURITY: Validate eventId format to prevent injection
     try {
       validateEventId(req.params.eventId);
@@ -1274,22 +1327,22 @@ router.get('/invitations', authenticateToken, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 50;
-    
-    logger.info('GET /invitations - Fetching events for user', { 
-      userId: req.user.id, 
+
+    logger.info('GET /invitations - Fetching events for user', {
+      userId: req.user.id,
       userEmail: req.user.email,
-      page, 
-      limit 
+      page,
+      limit
     });
-    
+
     let eventsList;
     let pagination = { page, limit, total: 0, totalPages: 0 };
-    
+
     // Essayer d'abord la méthode optimisée (vue matérialisée)
     try {
       const eventsOptimized = require('../utils/db/eventsOptimized');
       const result = await eventsOptimized.findByOrganizerWithStats(
-        req.user.id, 
+        req.user.id,
         { page, limit }
       );
       eventsList = result.events;
@@ -1298,13 +1351,13 @@ router.get('/invitations', authenticateToken, async (req, res) => {
       // Fallback: utiliser la méthode standard si la vue n'existe pas
       logger.info('Fallback to standard events query (mv_event_summary not available)');
       const allEvents = await events.findByOrganizer(req.user.id);
-      
+
       // Pagination manuelle
       const total = allEvents.length;
       const totalPages = Math.ceil(total / limit);
       eventsList = allEvents.slice((page - 1) * limit, page * limit);
       pagination = { page, limit, total, totalPages };
-      
+
       // Récupérer les stats pour chaque événement
       for (let event of eventsList) {
         const guestsList = await guests.findByEvent(event.id);
@@ -1325,7 +1378,7 @@ router.get('/invitations', authenticateToken, async (req, res) => {
       if (event.is_active) {
         status = eventDate > now ? 'published' : 'completed';
       }
-      
+
       return {
         id: event.id,
         name: event.title,
@@ -1366,13 +1419,13 @@ router.get('/invitations', authenticateToken, async (req, res) => {
 router.get('/dashboard/summary', authenticateToken, async (req, res) => {
   try {
     const eventsOptimized = require('../utils/db/eventsOptimized');
-    
+
     // 🚀 Récupère tous les stats en une seule requête
     const summaryData = await eventsOptimized.getDashboardSummary(req.user.id);
-    
+
     // Récupère le dernier événement pour les détails
     const { events: eventsList } = await eventsOptimized.findByOrganizerWithStats(
-      req.user.id, 
+      req.user.id,
       { page: 1, limit: 1 }
     );
 
@@ -1457,7 +1510,7 @@ router.post('/families', authenticateToken, familyValidationSchema.create, async
 router.put('/families/:familyId', authenticateToken, familyValidationSchema.update, async (req, res) => {
   try {
     console.log(`🔄 UPDATE Family ${req.params.familyId} - Data received:`, JSON.stringify(req.body, null, 2));
-    
+
     const family = await families.findById(req.params.familyId);
     if (!family || family.user_id !== req.user.id) {
       return res.status(404).json({
@@ -1465,16 +1518,16 @@ router.put('/families/:familyId', authenticateToken, familyValidationSchema.upda
         message: 'Family not found'
       });
     }
-    
+
     console.log(`📋 Current family data:`, JSON.stringify(family, null, 2));
-    
+
     const updatedFamily = await families.update(req.params.familyId, req.body);
-    
+
     console.log(`✅ Updated family data:`, JSON.stringify(updatedFamily, null, 2));
-    
+
     // 🔧 SYNC: Update invited_count in qr_codes table if max_people changed
     console.log(`🔍 SYNC CHECK: req.body.max_people=${req.body.max_people}, family.max_people=${family.max_people}, equal=${req.body.max_people === family.max_people}`);
-    
+
     // 🔍 DEBUG: Show current QR codes for this family
     try {
       const { supabaseService } = require('../config/supabase');
@@ -1482,7 +1535,7 @@ router.put('/families/:familyId', authenticateToken, familyValidationSchema.upda
         .from('qr_codes')
         .select('id, code, family_id, event_id, invited_count, created_at, is_valid')
         .eq('family_id', req.params.familyId);
-      
+
       if (qrError) {
         console.error('❌ Error fetching current QR codes:', qrError);
       } else {
@@ -1491,30 +1544,42 @@ router.put('/families/:familyId', authenticateToken, familyValidationSchema.upda
     } catch (debugError) {
       console.error('❌ Error in QR debug fetch:', debugError);
     }
-    
+
     if (req.body.max_people && req.body.max_people !== family.max_people) {
       try {
-        console.log(`🔄 Syncing QR codes invited_count from ${family.max_people} to ${req.body.max_people}`);
-        
+        console.log(`🔄 Syncing invited_count from ${family.max_people} to ${req.body.max_people}`);
+
         const { supabaseService } = require('../config/supabase');
-        
-        // Try simple update first (most reliable)
-        const { error: simpleError } = await supabaseService
+
+        // 🔧 SYNC: Update family_invitations table (priority - used for live QR codes)
+        const { error: fiError } = await supabaseService
+          .from('family_invitations')
+          .update({ invited_count: req.body.max_people })
+          .eq('family_id', req.params.familyId);
+
+        if (fiError) {
+          console.error('❌ Error syncing family_invitations:', fiError);
+        } else {
+          console.log(`✅ family_invitations invited_count synced`);
+        }
+
+        // 🔧 SYNC: Update qr_codes table (backup - for legacy QR codes)
+        const { error: qrError } = await supabaseService
           .from('qr_codes')
           .update({ invited_count: req.body.max_people })
           .eq('family_id', req.params.familyId);
-        
-        if (simpleError) {
-          console.error('❌ Error syncing QR codes:', simpleError);
+
+        if (qrError) {
+          console.error('❌ Error syncing QR codes:', qrError);
         } else {
-          console.log(`✅ QR codes invited_count synced successfully`);
+          console.log(`✅ qr_codes invited_count synced`);
         }
       } catch (syncError) {
-        console.error('❌ Error in QR sync process:', syncError);
+        console.error('❌ Error in sync process:', syncError);
         // Don't fail the request, just log the error - family update should still work
       }
     }
-    
+
     res.json({
       success: true,
       data: updatedFamily
@@ -1595,15 +1660,15 @@ router.post('/events/:eventId/families/:familyId/generate-qr', authenticateToken
   }
 });
 
-// POST /api/events/:eventId/families/:familyId/generate-multiple-qr - Generate multiple QR codes for a family
+// POST /api/events/:eventId/families/:familyId/generate-multiple-qr - Generate QR code for a family with invited count
 router.post('/events/:eventId/families/:familyId/generate-multiple-qr', authenticateToken, async (req, res) => {
   try {
     const { qr_count } = req.body;
-    
+
     if (!qr_count || qr_count < 1 || qr_count > 100) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'qr_count must be between 1 and 100' 
+      return res.status(400).json({
+        success: false,
+        message: 'qr_count must be between 1 and 100'
       });
     }
 
@@ -1633,37 +1698,36 @@ router.post('/events/:eventId/families/:familyId/generate-multiple-qr', authenti
       });
     }
 
-    // Generate multiple QR codes
-    const results = [];
-    for (let i = 0; i < qr_count; i++) {
-      const result = await qrCodeService.createQRCodeForFamily(
-        req.params.eventId,
-        req.params.familyId,
-        req.user.id,
-        1 // Each QR code is for 1 person
-      );
-      
-      results.push({
-        id: result.qrCode,
-        qr_code: result.qrCode,
-        url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/invite/${result.qrCode}`,
-        expires_at: result.expiresAt
-      });
-    }
+    // 🔧 FIX: Generate ONE QR code with invited_count = qr_count (which is max_people from frontend)
+    // The frontend passes maxPeople as qr_count, meaning "this QR allows N people"
+    const result = await qrCodeService.createQRCodeForFamily(
+      req.params.eventId,
+      req.params.familyId,
+      req.user.id,
+      qr_count // Use qr_count as the invited_count (allows this many people per QR)
+    );
+
+    const results = [{
+      id: result.qrCode,
+      qr_code: result.qrCode,
+      url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/invite/${result.qrCode}`,
+      expires_at: result.expiresAt
+    }];
 
     res.json({
       success: true,
-      message: `${qr_count} QR code(s) generated for family`,
+      message: `QR code generated for ${qr_count} person(s)`,
       data: results
     });
   } catch (error) {
-    logger.error('Error generating multiple QR codes for family:', { error: error.message });
+    logger.error('Error generating QR code for family:', { error: error.message });
     res.status(500).json({
       success: false,
-      message: 'Server error while generating QR codes'
+      message: 'Server error while generating QR code'
     });
   }
 });
+
 
 
 // POST /api/upload - Upload a file (image) to R2 with background optimization
@@ -1720,7 +1784,7 @@ router.post('/upload', authenticateToken, uploadLimiter, upload.single('image'),
         }
       } catch (optimizationError) {
         logger.error('Background optimization failed, falling back to direct', { error: optimizationError.message });
-        
+
         // Fallback: optimize directly in the request
         const { buffer, mimetype, extension } = await imageService.optimizeImageByUsage(
           req.file.buffer,
@@ -1878,7 +1942,7 @@ router.post('/upload/any', authenticateToken, uploadAny.single('file'), async (r
         }
       } catch (optimizationError) {
         logger.error('Background optimization failed, falling back to direct', { error: optimizationError.message });
-        
+
         // Fallback: optimize directly
         const { buffer, mimetype, extension } = await imageService.optimizeImageByUsage(
           req.file.buffer,
@@ -2197,7 +2261,7 @@ router.get('/events/:eventId/games/:gameId', authenticateToken, async (req, res)
     }
 
     const game = await games.getGameWithQuestions(req.params.gameId);
-    
+
     if (!game || game.event_id !== req.params.eventId) {
       return res.status(404).json({
         success: false,
@@ -2248,6 +2312,126 @@ router.post('/events/:eventId/games', authenticateToken, gameValidationSchema.cr
     res.status(500).json({
       success: false,
       message: 'Server error while creating game'
+    });
+  }
+});
+
+// POST /api/events/:eventId/games/with-questions - Create a new game with predefined questions
+router.post('/events/:eventId/games/with-questions', authenticateToken, async (req, res) => {
+  try {
+    const event = await verifyEventOwnership(req.params.eventId, req.user.id);
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found or you do not have permission to access it'
+      });
+    }
+
+    const { name, type, description, settings, questions: questionsData } = req.body;
+
+    // Validation
+    if (!name || !type || !questionsData || !Array.isArray(questionsData) || questionsData.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Game name, type, and at least one question are required'
+      });
+    }
+
+    // Create game
+    const gameData = {
+      name,
+      type,
+      description: description || '',
+      settings: settings || {},
+      event_id: req.params.eventId,
+      status: 'active', // Auto-activate games with questions
+      is_active: true
+    };
+
+    const game = await games.create(gameData);
+
+    // Create questions
+    const questionsToCreate = questionsData.map((q, index) => ({
+      game_id: game.id,
+      question: q.question,
+      question_type: q.question_type || 'multiple_choice',
+      options: q.options || [],
+      correct_answer: q.correct_answer || null,
+      points: q.points || 1,
+      time_limit: q.time_limit || null,
+      sort_order: q.sort_order || index,
+      is_active: true
+    }));
+
+    const createdQuestions = await games.createQuestions(questionsToCreate);
+
+    // Return game with questions
+    const gameWithQuestions = await games.getGameWithQuestions(game.id);
+
+    res.status(201).json({
+      success: true,
+      message: `Game created successfully with ${createdQuestions.length} questions`,
+      data: gameWithQuestions
+    });
+  } catch (error) {
+    logger.error('Error creating game with questions:', { error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Server error while creating game with questions'
+    });
+  }
+});
+
+// POST /api/events/:eventId/games/:gameId/qr-code - Generate QR code for a game
+router.post('/events/:eventId/games/:gameId/qr-code', authenticateToken, async (req, res) => {
+  try {
+    const event = await verifyEventOwnership(req.params.eventId, req.user.id);
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found or you do not have permission to access it'
+      });
+    }
+
+    const existingGame = await games.findById(req.params.gameId);
+    if (!existingGame || existingGame.event_id !== req.params.eventId) {
+      return res.status(404).json({
+        success: false,
+        message: 'Game not found'
+      });
+    }
+
+    // Generate a secure game access code
+    const gameCode = `GAME-${uuidv4()}`;
+
+    // Store the code in game settings for validation
+    const updatedSettings = {
+      ...existingGame.settings,
+      accessCode: gameCode,
+      qrCodeGeneratedAt: new Date().toISOString()
+    };
+
+    await games.update(req.params.gameId, { settings: updatedSettings });
+
+    // Generate URLs
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const gameUrl = `${baseUrl}/play/${req.params.gameId}?token=${gameCode}`;
+    const qrCodeUrl = `${baseUrl}/api/qr/generate?data=${encodeURIComponent(gameUrl)}`;
+
+    res.json({
+      success: true,
+      message: 'QR code generated successfully',
+      data: {
+        qrCode: gameCode,
+        qrCodeUrl: qrCodeUrl,
+        gameUrl: gameUrl
+      }
+    });
+  } catch (error) {
+    logger.error('Error generating game QR code:', { error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Server error while generating QR code'
     });
   }
 });
@@ -2620,7 +2804,7 @@ router.post('/events/:eventId/families/:familyId/invite', authenticateToken, asy
     // Check if invitation already exists
     const existingInvitations = await familyInvitations.findByEvent(req.params.eventId);
     const existingInvitation = existingInvitations.find(inv => inv.family_id === req.params.familyId);
-    
+
     if (existingInvitation) {
       return res.status(409).json({
         success: false,
@@ -2631,7 +2815,7 @@ router.post('/events/:eventId/families/:familyId/invite', authenticateToken, asy
     // Generate unique QR code
     // 🛡️ SECURITY FIX: Using UUID v4 as required by rules.md instead of Math.random
     const qrCode = `FAM-${uuidv4()}`;
-    
+
     // Calculate expiration (30 days from now)
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30);
@@ -2670,11 +2854,11 @@ router.post('/events/:eventId/families/:familyId/invite', authenticateToken, asy
 router.post('/events/:eventId/family-invitations', authenticateToken, async (req, res) => {
   try {
     const { family_id, invited_count } = req.body;
-    
+
     if (!family_id) {
       return res.status(400).json({ success: false, message: 'family_id is required' });
     }
-    
+
     // Verify event belongs to user
     const event = await events.findById(req.params.eventId);
     if (!event || event.organizer_id !== req.user.id) {
@@ -2692,7 +2876,7 @@ router.post('/events/:eventId/family-invitations', authenticateToken, async (req
     // Check if invitation already exists
     const existingInvitations = await familyInvitations.findByEvent(req.params.eventId);
     const existingInvitation = existingInvitations.find(inv => inv.family_id === family_id);
-    
+
     if (existingInvitation) {
       return res.status(409).json({
         success: false,
@@ -2702,7 +2886,7 @@ router.post('/events/:eventId/family-invitations', authenticateToken, async (req
 
     // Generate unique QR code
     const qrCode = `FAM-${uuidv4()}`;
-    
+
     // Calculate expiration (30 days from now)
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30);
@@ -2807,7 +2991,7 @@ router.delete('/family-invitations/:invitationId', authenticateToken, async (req
 router.get('/public/invitation/:qrCode', async (req, res) => {
   try {
     const invitation = await familyInvitations.findByQRCode(req.params.qrCode);
-    
+
     if (!invitation) {
       return res.status(404).json({
         success: false,
@@ -2865,7 +3049,7 @@ router.get('/public/invitation/:qrCode', async (req, res) => {
 router.post('/public/invitation/:qrCode/rsvp', async (req, res) => {
   try {
     const invitation = await familyInvitations.findByQRCode(req.params.qrCode);
-    
+
     if (!invitation) {
       return res.status(404).json({
         success: false,
@@ -3098,7 +3282,7 @@ router.post('/events/:eventId/wishes', wishValidationSchema.create, async (req, 
 
     // Check rate limiting based on IP
     const ipAddress = req.ip || req.connection.remoteAddress;
-    
+
     const wishData = {
       event_id: req.params.eventId,
       guest_id: guestId || null,
@@ -3576,10 +3760,10 @@ router.post('/events/:eventId/feedbacks/:feedbackId/moderate', authenticateToken
 router.post('/public/feedback/:eventId', async (req, res) => {
   try {
     const { eventId } = req.params;
-    const { 
-      authorName, 
-      authorEmail, 
-      message, 
+    const {
+      authorName,
+      authorEmail,
+      message,
       feedbackType = 'wish',
       rating,
       category,
@@ -3587,7 +3771,7 @@ router.post('/public/feedback/:eventId', async (req, res) => {
       accentColor,
       familyId,
       guestId,
-      qrCode 
+      qrCode
     } = req.body;
 
     // Validate required fields
@@ -4339,7 +4523,7 @@ router.put('/events/:eventId/menu-settings', authenticateToken, celebrate({
     };
 
     const newSettings = { ...currentSettings, ...req.body };
-    
+
     // Business logic: table placement only available if invitation service is enabled
     if (req.body.hasOwnProperty('table') && req.body.table === true && !newSettings.invitation) {
       return res.status(400).json({
@@ -4353,10 +4537,10 @@ router.put('/events/:eventId/menu-settings', authenticateToken, celebrate({
       menu_settings: newSettings
     });
 
-    logger.info('Menu settings updated', { 
-      eventId: req.params.eventId, 
+    logger.info('Menu settings updated', {
+      eventId: req.params.eventId,
       userId: req.user.id,
-      settings: newSettings 
+      settings: newSettings
     });
 
     res.json({

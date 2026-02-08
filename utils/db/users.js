@@ -17,45 +17,95 @@ const userDb = {
     return data;
   },
 
-  // Find user by ID
-  findById: async (id) => {
-    const { data, error, status } = await supabaseService
-      .from('users')
-      .select('*')
-      .eq('id', id)
-      .single();
+  // Find user by ID with retry logic
+  findById: async (id, retries = 3) => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const { data, error, status } = await supabaseService
+          .from('users')
+          .select('*')
+          .eq('id', id)
+          .single();
 
-    if (error) {
-      if (error.code === 'PGRST116' || status === 404 || status === 406) {
-        // Cela signifie simplement que l'utilisateur n'existe pas
-        return null;
+        if (error) {
+          if (error.code === 'PGRST116' || status === 404 || status === 406) {
+            // Cela signifie simplement que l'utilisateur n'existe pas
+            return null;
+          }
+          
+          // Check if it's a network error that might be retryable
+          if (attempt < retries && (
+            error.message.includes('fetch failed') || 
+            error.message.includes('network') ||
+            status >= 500
+          )) {
+            console.warn(`🔄 Database retry ${attempt}/${retries} for user findById:`, error.message);
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+            continue;
+          }
+          
+          // Sinon, c'est une vraie erreur technique
+          throw new Error(`Error finding user: ${error.message}`);
+        }
+
+        return data;
+      } catch (networkError) {
+        if (attempt < retries && networkError.message.includes('fetch failed')) {
+          console.warn(`🔄 Network retry ${attempt}/${retries} for user findById:`, networkError.message);
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          continue;
+        }
+        throw new Error(`Error finding user: ${networkError.message}`);
       }
-      // Sinon, c'est une vraie erreur technique
-      throw new Error(`Error finding user: ${error.message}`);
     }
-
-    return data;
+    
+    throw new Error('Max retries exceeded for user findById query');
   },
 
-  // Find user by email
-  findByEmail: async (email) => {
-    const { data, error, status } = await supabaseService
-      .from('users')
-      .select('*')
-      .ilike('email', email)
-      .single();
+  // Find user by email with retry logic
+  findByEmail: async (email, retries = 3) => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const { data, error, status } = await supabaseService
+          .from('users')
+          .select('*')
+          .ilike('email', email)
+          .single();
 
-    // Si l'utilisateur n'existe pas, Supabase renvoie une erreur avec status 406 ou 404
-    if (error) {
-      if (error.code === 'PGRST116' || status === 404 || status === 406) {
-        // Cela signifie simplement que l'utilisateur n'existe pas
-        return null;
+        // Si l'utilisateur n'existe pas, Supabase renvoie une erreur avec status 406 ou 404
+        if (error) {
+          if (error.code === 'PGRST116' || status === 404 || status === 406) {
+            // Cela signifie simplement que l'utilisateur n'existe pas
+            return null;
+          }
+          
+          // Check if it's a network error that might be retryable
+          if (attempt < retries && (
+            error.message.includes('fetch failed') || 
+            error.message.includes('network') ||
+            status >= 500
+          )) {
+            console.warn(`🔄 Database retry ${attempt}/${retries} for email query:`, error.message);
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // exponential backoff
+            continue;
+          }
+          
+          // Sinon, c'est une vraie erreur technique
+          throw new Error(`Error finding user by email: ${error.message}`);
+        }
+
+        return data;
+      } catch (networkError) {
+        if (attempt < retries && networkError.message.includes('fetch failed')) {
+          console.warn(`🔄 Network retry ${attempt}/${retries} for email query:`, networkError.message);
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          continue;
+        }
+        throw new Error(`Error finding user by email: ${networkError.message}`);
       }
-      // Sinon, c'est une vraie erreur technique
-      throw new Error(`Error finding user by email: ${error.message}`);
     }
-
-    return data;
+    
+    throw new Error('Max retries exceeded for database query');
   },
 
   // Update user

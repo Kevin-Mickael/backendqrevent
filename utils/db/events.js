@@ -2,18 +2,34 @@ const { supabaseService } = require('../../config/supabase');
 
 // Event database utilities
 const eventDb = {
-  // Create a new event
+  // Create a new event with venue support
   create: async (eventData) => {
     console.log('[events.create] Creating event with data:', {
       title: eventData.title,
       hasDescription: !!eventData.description,
-      date: eventData.date,
+      venue_type: eventData.venue_type,
+      ceremony_date: eventData.ceremony_date,
+      reception_date: eventData.reception_date,
       organizer_id: eventData.organizer_id
     });
     
+    // Prepare venue data based on type
+    const processedEventData = {
+      ...eventData,
+      // Ensure venue_type is set
+      venue_type: eventData.venue_type || 'single',
+    };
+
+    // For single venue, copy ceremony venue to reception if not provided
+    if (processedEventData.venue_type === 'single' && processedEventData.ceremony_venue) {
+      processedEventData.reception_venue = null; // Single venue doesn't need reception venue
+      processedEventData.reception_date = processedEventData.ceremony_date;
+      processedEventData.reception_time = processedEventData.ceremony_time;
+    }
+    
     const { data, error } = await supabaseService
       .from('events')
-      .insert([eventData])
+      .insert([processedEventData])
       .select()
       .single();
 
@@ -21,7 +37,8 @@ const eventDb = {
       console.error('[events.create] Supabase error:', {
         code: error.code,
         message: error.message,
-        details: error.details
+        details: error.details,
+        hint: error.hint
       });
       throw new Error(`Error creating event: ${error.message} (code: ${error.code})`);
     }

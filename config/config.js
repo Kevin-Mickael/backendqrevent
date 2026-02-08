@@ -1,13 +1,33 @@
 require('dotenv').config();
 
-// 🛡️ SECURITY: Validate JWT Secret strength
+// 🛡️ SECURITY: Validate JWT Secret strength (ENHANCED)
 function validateJwtSecret(secret) {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
   if (!secret) {
     throw new Error('JWT_SECRET environment variable is required');
   }
   
-  if (secret.length < 32) {
-    throw new Error('JWT_SECRET must be at least 32 characters long for security');
+  // Minimum length requirements
+  const minLength = isProduction ? 64 : 32; // Production needs 64+ chars
+  if (secret.length < minLength) {
+    throw new Error(`JWT_SECRET must be at least ${minLength} characters long (current: ${secret.length})`);
+  }
+  
+  // Check for development placeholder patterns
+  const devPlaceholders = [
+    /CHANGE_ME/i,
+    /REPLACE_ME/i,
+    /YOUR_SECRET/i,
+    /PLACEHOLDER/i,
+    /EXAMPLE/i,
+    /DEFAULT/i,
+  ];
+  
+  for (const pattern of devPlaceholders) {
+    if (pattern.test(secret)) {
+      throw new Error('JWT_SECRET contains placeholder text. Please generate a secure random secret.');
+    }
   }
   
   // Check for common weak patterns
@@ -18,7 +38,9 @@ function validateJwtSecret(secret) {
     /^test/i,
     /^123456/,
     /^qwerty/i,
-    /^(.)\1+$/,  // Same character repeated
+    /^(.)\1{5,}$/,  // Same character repeated 6+ times
+    /^12345/,
+    /^abcde/i,
   ];
   
   for (const pattern of weakPatterns) {
@@ -27,11 +49,25 @@ function validateJwtSecret(secret) {
     }
   }
   
-  // Calculate entropy (rough estimate)
+  // Enhanced entropy calculation
   const uniqueChars = new Set(secret).size;
   const entropy = uniqueChars / secret.length;
-  if (entropy < 0.5 && secret.length < 64) {
-    console.warn('⚠️ WARNING: JWT_SECRET has low character diversity. Consider using a longer or more random secret.');
+  
+  // Strict entropy requirements for production
+  const minEntropy = isProduction ? 0.6 : 0.5;
+  if (entropy < minEntropy) {
+    const message = `JWT_SECRET has low character diversity (${(entropy * 100).toFixed(1)}%). Use a random generator.`;
+    if (isProduction) {
+      throw new Error(message);
+    } else {
+      console.warn('⚠️ WARNING:', message);
+    }
+  }
+  
+  // Check for common hex patterns in production
+  if (isProduction && /^[a-f0-9]+$/i.test(secret) && secret.length === 64) {
+    // This is actually good - likely from openssl rand -hex 32
+    console.log('✅ JWT_SECRET appears to be a secure hex string');
   }
   
   return secret;

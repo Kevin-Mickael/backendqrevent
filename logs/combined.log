@@ -5669,3 +5669,853 @@
 {"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-07 22:06:56"}
 {"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-07 22:06:56"}
 {"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-07 22:13:18","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 07:38:46"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 07:38:47"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 07:38:47"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 07:38:47"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 07:38:47"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 07:38:49"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 07:38:49"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 07:38:50"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 07:38:51"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 07:38:51"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 07:38:52"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 07:38:52"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 07:47:06"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 07:47:07"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 07:47:07"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 07:47:07"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 07:47:07"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 07:47:09"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 07:47:09"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 07:47:09"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 07:47:11"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 07:47:11"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 07:47:11"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 07:47:11"}
+{"level":"info","message":"Redis not configured, using memory fallback for refresh tokens","service":"qrevent-backend","timestamp":"2026-02-08 07:48:50"}
+{"level":"info","message":"User logged in","service":"qrevent-backend","timestamp":"2026-02-08 07:48:51","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 07:48:53","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 07:48:54","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 07:50:19","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 07:50:52","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 07:51:17","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 07:51:18","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 07:53:01"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 07:53:01"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 07:53:01"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 07:53:02"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 07:53:02"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 07:53:03"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 07:53:04"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 07:53:04"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 07:53:05"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 07:53:06"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 07:53:06"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 07:53:06"}
+{"0":"S","1":"t","10":"'","11":"t","12":" ","13":"w","14":"r","15":"i","16":"t","17":"e","18":"a","19":"b","2":"r","20":"l","21":"e","22":" ","23":"a","24":"n","25":"d","26":" ","27":"e","28":"n","29":"a","3":"e","30":"b","31":"l","32":"e","33":"O","34":"f","35":"f","36":"l","37":"i","38":"n","39":"e","4":"a","40":"Q","41":"u","42":"e","43":"u","44":"e","45":" ","46":"o","47":"p","48":"t","49":"i","5":"m","50":"o","51":"n","52":"s","53":" ","54":"i","55":"s","56":" ","57":"f","58":"a","59":"l","6":" ","60":"s","61":"e","7":"i","8":"s","9":"n","level":"warn","message":"Cache get error:","service":"qrevent-backend","timestamp":"2026-02-08 07:55:48"}
+{"0":"S","1":"t","10":"'","11":"t","12":" ","13":"w","14":"r","15":"i","16":"t","17":"e","18":"a","19":"b","2":"r","20":"l","21":"e","22":" ","23":"a","24":"n","25":"d","26":" ","27":"e","28":"n","29":"a","3":"e","30":"b","31":"l","32":"e","33":"O","34":"f","35":"f","36":"l","37":"i","38":"n","39":"e","4":"a","40":"Q","41":"u","42":"e","43":"u","44":"e","45":" ","46":"o","47":"p","48":"t","49":"i","5":"m","50":"o","51":"n","52":"s","53":" ","54":"i","55":"s","56":" ","57":"f","58":"a","59":"l","6":" ","60":"s","61":"e","7":"i","8":"s","9":"n","level":"warn","message":"Cache set error:","service":"qrevent-backend","timestamp":"2026-02-08 07:55:48"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 07:55:48","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 07:55:49","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 07:55:53","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 07:55:54","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 08:02:54"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 08:02:54"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:02:54"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:02:54"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 08:02:54"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 08:02:56"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:02:56"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:02:56"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 08:02:58"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:02:59"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:02:59"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 08:02:59"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:09:35","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"0":"S","1":"t","10":"'","11":"t","12":" ","13":"w","14":"r","15":"i","16":"t","17":"e","18":"a","19":"b","2":"r","20":"l","21":"e","22":" ","23":"a","24":"n","25":"d","26":" ","27":"e","28":"n","29":"a","3":"e","30":"b","31":"l","32":"e","33":"O","34":"f","35":"f","36":"l","37":"i","38":"n","39":"e","4":"a","40":"Q","41":"u","42":"e","43":"u","44":"e","45":" ","46":"o","47":"p","48":"t","49":"i","5":"m","50":"o","51":"n","52":"s","53":" ","54":"i","55":"s","56":" ","57":"f","58":"a","59":"l","6":" ","60":"s","61":"e","7":"i","8":"s","9":"n","level":"warn","message":"Cache get error:","service":"qrevent-backend","timestamp":"2026-02-08 08:09:35"}
+{"0":"S","1":"t","10":"'","11":"t","12":" ","13":"w","14":"r","15":"i","16":"t","17":"e","18":"a","19":"b","2":"r","20":"l","21":"e","22":" ","23":"a","24":"n","25":"d","26":" ","27":"e","28":"n","29":"a","3":"e","30":"b","31":"l","32":"e","33":"O","34":"f","35":"f","36":"l","37":"i","38":"n","39":"e","4":"a","40":"Q","41":"u","42":"e","43":"u","44":"e","45":" ","46":"o","47":"p","48":"t","49":"i","5":"m","50":"o","51":"n","52":"s","53":" ","54":"i","55":"s","56":" ","57":"f","58":"a","59":"l","6":" ","60":"s","61":"e","7":"i","8":"s","9":"n","level":"warn","message":"Cache set error:","service":"qrevent-backend","timestamp":"2026-02-08 08:09:35"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:09:36","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 08:27:14"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 08:27:15"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:27:15"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:27:15"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 08:27:15"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 08:27:17"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:27:18"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:27:18"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 08:27:20"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:27:20"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:27:20"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 08:27:20"}
+{"0":"S","1":"t","10":"'","11":"t","12":" ","13":"w","14":"r","15":"i","16":"t","17":"e","18":"a","19":"b","2":"r","20":"l","21":"e","22":" ","23":"a","24":"n","25":"d","26":" ","27":"e","28":"n","29":"a","3":"e","30":"b","31":"l","32":"e","33":"O","34":"f","35":"f","36":"l","37":"i","38":"n","39":"e","4":"a","40":"Q","41":"u","42":"e","43":"u","44":"e","45":" ","46":"o","47":"p","48":"t","49":"i","5":"m","50":"o","51":"n","52":"s","53":" ","54":"i","55":"s","56":" ","57":"f","58":"a","59":"l","6":" ","60":"s","61":"e","7":"i","8":"s","9":"n","level":"warn","message":"Cache get error:","service":"qrevent-backend","timestamp":"2026-02-08 08:27:26"}
+{"0":"S","1":"t","10":"'","11":"t","12":" ","13":"w","14":"r","15":"i","16":"t","17":"e","18":"a","19":"b","2":"r","20":"l","21":"e","22":" ","23":"a","24":"n","25":"d","26":" ","27":"e","28":"n","29":"a","3":"e","30":"b","31":"l","32":"e","33":"O","34":"f","35":"f","36":"l","37":"i","38":"n","39":"e","4":"a","40":"Q","41":"u","42":"e","43":"u","44":"e","45":" ","46":"o","47":"p","48":"t","49":"i","5":"m","50":"o","51":"n","52":"s","53":" ","54":"i","55":"s","56":" ","57":"f","58":"a","59":"l","6":" ","60":"s","61":"e","7":"i","8":"s","9":"n","level":"warn","message":"Cache set error:","service":"qrevent-backend","timestamp":"2026-02-08 08:27:26"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 08:34:22"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 08:34:22"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:34:22"}
+{"0":"I","1":"n","10":"L","2":"v","3":"a","4":"l","5":"i","6":"d","7":" ","8":"U","9":"R","level":"warn","message":"Migration check completed (may already be applied):","service":"qrevent-backend","timestamp":"2026-02-08 08:34:22"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 08:34:22"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:34:22"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 08:34:22"}
+{"error":"Error finding user by email: TypeError: fetch failed","level":"error","message":"Database error:","service":"qrevent-backend","timestamp":"2026-02-08 08:35:12"}
+{"error":"Error finding user by email: TypeError: fetch failed","level":"error","message":"Database error:","service":"qrevent-backend","timestamp":"2026-02-08 08:35:58"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 08:36:14"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 08:36:14"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:36:14"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:36:14"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 08:36:14"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 08:36:16"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:36:16"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:36:17"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 08:36:18"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:36:19"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:36:19"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 08:36:19"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 08:36:25"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 08:36:25"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:36:25"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:36:25"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 08:36:25"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 08:36:27"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:36:27"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:36:28"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 08:36:30"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:36:30"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:36:30"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 08:36:30"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 08:36:43"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 08:36:44"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:36:44"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:36:44"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 08:36:44"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 08:36:45"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:36:46"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:36:46"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 08:36:47"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:36:48"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:36:48"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 08:36:48"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 08:37:03"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 08:37:03"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:37:03"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:37:03"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 08:37:03"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 08:37:05"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:37:05"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:37:05"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 08:37:07"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:37:08"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:37:08"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 08:37:08"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 08:37:22"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 08:37:23"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:37:23"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:37:23"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 08:37:23"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 08:37:25"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:37:25"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:37:26"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 08:37:27"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:37:27"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:37:27"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 08:37:27"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 08:37:39"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 08:37:39"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:37:39"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:37:39"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 08:37:39"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 08:37:41"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:37:41"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:37:42"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 08:37:44"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:37:44"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:37:44"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 08:37:44"}
+{"level":"info","message":"🩺 Database health monitoring started (interval: 60000ms)","service":"qrevent-backend","timestamp":"2026-02-08 08:37:44"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 08:37:51"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 08:37:51"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:37:51"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:37:51"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 08:37:51"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 08:37:53"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:37:54"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:37:54"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 08:37:55"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:37:56"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:37:56"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 08:37:56"}
+{"level":"info","message":"🩺 Database health monitoring started (interval: 60000ms)","service":"qrevent-backend","timestamp":"2026-02-08 08:37:56"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 08:38:10"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 08:38:10"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:38:10"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:38:10"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 08:38:10"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 08:38:12"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:38:12"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:38:13"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 08:38:14"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:38:15"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:38:15"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 08:38:15"}
+{"level":"info","message":"🩺 Database health monitoring started (interval: 60000ms)","service":"qrevent-backend","timestamp":"2026-02-08 08:38:15"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 08:38:23"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 08:38:23"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:38:23"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:38:23"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 08:38:23"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 08:38:25"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:38:25"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:38:25"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 08:38:28"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 08:38:28"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 08:38:28"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 08:38:28"}
+{"level":"info","message":"🩺 Database health monitoring started (interval: 60000ms)","service":"qrevent-backend","timestamp":"2026-02-08 08:38:28"}
+{"level":"info","message":"Redis not configured, using memory fallback for refresh tokens","service":"qrevent-backend","timestamp":"2026-02-08 08:38:58"}
+{"level":"info","message":"User logged in","service":"qrevent-backend","timestamp":"2026-02-08 08:38:59","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","message":"User logged in","service":"qrevent-backend","timestamp":"2026-02-08 08:41:41","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:41:42","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:41:43","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","message":"User logged in","service":"qrevent-backend","timestamp":"2026-02-08 08:47:06","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:47:07","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:47:08","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:47:09","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:47:10","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:47:21","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:47:22","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:50:02","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:50:03","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:50:11","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:50:13","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:50:18","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:50:19","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:50:21","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:50:22","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:50:25","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:50:26","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:50:33","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:50:34","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:50:49","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:50:49","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:51:05","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:51:06","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:52:06","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:52:07","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:52:08","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:54:44","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:54:45","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:56:59","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:57:00","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:57:50","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:57:51","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:59:23","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:59:24","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:59:40","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 08:59:41","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 09:20:11","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 09:20:12","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 09:23:07","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 09:23:54","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 09:24:54","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 09:46:33"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 09:46:34"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:46:34"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 09:46:34"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 09:46:34"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 09:46:36"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:46:36"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:46:36"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 09:46:38"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:46:38"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 09:46:38"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 09:46:38"}
+{"level":"info","message":"🩺 Database health monitoring started (interval: 60000ms)","service":"qrevent-backend","timestamp":"2026-02-08 09:46:38"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 09:52:04"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 09:52:04"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:04"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 09:52:04"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 09:52:04"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 09:52:06"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:06"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:06"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 09:52:08"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:08"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 09:52:08"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 09:52:08"}
+{"level":"info","message":"🩺 Database health monitoring started (interval: 60000ms)","service":"qrevent-backend","timestamp":"2026-02-08 09:52:08"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 09:52:24"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 09:52:25"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:25"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 09:52:25"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 09:52:25"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 09:52:26"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:27"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:27"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 09:52:28"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:29"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 09:52:29"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 09:52:29"}
+{"level":"info","message":"🩺 Database health monitoring started (interval: 60000ms)","service":"qrevent-backend","timestamp":"2026-02-08 09:52:29"}
+{"level":"info","message":"🔧 Database Migration Tool","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"========================","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"Found 46 migration(s):","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 001_add_avatar_url.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 001_create_rpc_functions.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 001_create_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 002_add_couple_names.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 002_add_files_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 003_secure_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 004_add_avatar_to_users.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 005_add_story_events_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 006_add_games_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 006_add_games_tables_fixed.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 006_create_families_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 007_add_guest_game_access.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 007_add_performance_indexes.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 007_create_family_invitations.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 008_add_dashboard_optimizations.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 008b_add_is_active_to_guests.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 009_add_feedback_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 009_create_wishes_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 010_create_seating_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 011_link_families_to_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 012_add_preferences_to_users.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 013_create_audit_logging.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 014_create_budget_items_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 015_add_quantity_unit_price.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 016_add_total_budget_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 017_add_budget_item_details.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 017_add_menu_settings_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 018_add_max_people_to_families.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 018_create_messages_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 019_make_description_nullable.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 019_secure_messages_rls.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 020_create_event_gallery_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 020_security_fixes.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 022_cleanup_test_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 023_consolidated_schema_optimization.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 024_create_robust_menu_system.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 025_enforce_event_isolation.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 026_secure_event_creation_function.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 028_add_family_id_to_qr_codes.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 029_add_ceremony_reception_venues.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 030_fix_qr_codes_trigger.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - 999_final_schema_sync.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - EXECUTE_IN_SUPABASE_SQL_EDITOR.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"  - add_avatar_url.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"\n📄 Migration to apply (029_add_ceremony_reception_venues.sql):","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"---","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"-- Migration 029: Add ceremony and reception venues support\n-- Enhances the events table to support separate venues for ceremony and reception\n\nDO $$ \nBEGIN\n  -- Add new columns for ceremony and reception venues\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' \n    AND column_name = 'ceremony_venue'\n  ) THEN\n    ALTER TABLE events ADD COLUMN ceremony_venue JSONB;\n  END IF;\n\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' \n    AND column_name = 'reception_venue'\n  ) THEN\n    ALTER TABLE events ADD COLUMN reception_venue JSONB;\n  END IF;\n\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' \n    AND column_name = 'ceremony_date'\n  ) THEN\n    ALTER TABLE events ADD COLUMN ceremony_date DATE;\n  END IF;\n\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' \n    AND column_name = 'ceremony_time'\n  ) THEN\n    ALTER TABLE events ADD COLUMN ceremony_time TIME;\n  END IF;\n\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' \n    AND column_name = 'reception_date'\n  ) THEN\n    ALTER TABLE events ADD COLUMN reception_date DATE;\n  END IF;\n\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' \n    AND column_name = 'reception_time'\n  ) THEN\n    ALTER TABLE events ADD COLUMN reception_time TIME;\n  END IF;\n\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' \n    AND column_name = 'venue_type'\n  ) THEN\n    ALTER TABLE events ADD COLUMN venue_type VARCHAR(20) DEFAULT 'single' \n    CHECK (venue_type IN ('single', 'separate'));\n  END IF;\n\n  -- Add indexes for performance\n  IF NOT EXISTS (\n    SELECT 1 FROM pg_indexes \n    WHERE tablename = 'events' \n    AND indexname = 'idx_events_ceremony_date'\n  ) THEN\n    CREATE INDEX idx_events_ceremony_date ON events(ceremony_date);\n  END IF;\n\n  IF NOT EXISTS (\n    SELECT 1 FROM pg_indexes \n    WHERE tablename = 'events' \n    AND indexname = 'idx_events_reception_date'\n  ) THEN\n    CREATE INDEX idx_events_reception_date ON events(reception_date);\n  END IF;\n\n  IF NOT EXISTS (\n    SELECT 1 FROM pg_indexes \n    WHERE tablename = 'events' \n    AND indexname = 'idx_events_venue_type'\n  ) THEN\n    CREATE INDEX idx_events_venue_type ON events(venue_type);\n  END IF;\n\nEND $$;\n\n-- Create a function to migrate existing events to new structure\nCREATE OR REPLACE FUNCTION migrate_existing_events_to_venues()\nRETURNS void AS $$\nBEGIN\n  -- Update existing events to use the new structure\n  -- If they have a location, consider it as ceremony venue for single venue type\n  UPDATE events \n  SET \n    venue_type = 'single',\n    ceremony_venue = COALESCE(location, '{\"name\": \"\", \"address\": \"\", \"city\": \"\", \"postalCode\": \"\"}'),\n    ceremony_date = date::DATE,\n    ceremony_time = date::TIME\n  WHERE venue_type IS NULL AND location IS NOT NULL;\n\n  -- For events without location, set default structure\n  UPDATE events \n  SET \n    venue_type = 'single',\n    ceremony_venue = '{\"name\": \"\", \"address\": \"\", \"city\": \"\", \"postalCode\": \"\"}',\n    ceremony_date = date::DATE,\n    ceremony_time = date::TIME\n  WHERE venue_type IS NULL AND location IS NULL;\n\n  -- Log the migration\n  RAISE NOTICE 'Migrated % events to new venue structure', \n    (SELECT COUNT(*) FROM events WHERE venue_type IS NOT NULL);\nEND;\n$$ LANGUAGE plpgsql;\n\n-- Execute the migration function\nSELECT migrate_existing_events_to_venues();\n\n-- Add comments for documentation\nCOMMENT ON COLUMN events.ceremony_venue IS 'JSONB object containing ceremony venue details: {name, address, city, postalCode, coordinates}';\nCOMMENT ON COLUMN events.reception_venue IS 'JSONB object containing reception venue details: {name, address, city, postalCode, coordinates}';\nCOMMENT ON COLUMN events.ceremony_date IS 'Date of the ceremony (separate from time for better UI/UX)';\nCOMMENT ON COLUMN events.ceremony_time IS 'Time of the ceremony';\nCOMMENT ON COLUMN events.reception_date IS 'Date of the reception (separate from time for better UI/UX)';\nCOMMENT ON COLUMN events.reception_time IS 'Time of the reception';\nCOMMENT ON COLUMN events.venue_type IS 'Type of venue: single (same venue for ceremony and reception) or separate';\n\n-- Create validation function\nCREATE OR REPLACE FUNCTION validate_event_venues()\nRETURNS trigger AS $$\nBEGIN\n  -- Validate venue_type and corresponding data\n  IF NEW.venue_type = 'separate' THEN\n    -- For separate venues, both ceremony and reception venues must be provided\n    IF NEW.ceremony_venue IS NULL OR NEW.reception_venue IS NULL THEN\n      RAISE EXCEPTION 'Both ceremony_venue and reception_venue must be provided for separate venue type';\n    END IF;\n    \n    IF NEW.ceremony_date IS NULL OR NEW.reception_date IS NULL THEN\n      RAISE EXCEPTION 'Both ceremony_date and reception_date must be provided for separate venue type';\n    END IF;\n  ELSE\n    -- For single venue, ceremony venue is required, reception venue should be null\n    IF NEW.ceremony_venue IS NULL THEN\n      RAISE EXCEPTION 'ceremony_venue is required for single venue type';\n    END IF;\n    \n    IF NEW.ceremony_date IS NULL THEN\n      RAISE EXCEPTION 'ceremony_date is required';\n    END IF;\n  END IF;\n  \n  RETURN NEW;\nEND;\n$$ LANGUAGE plpgsql;\n\n-- Create trigger for validation\nDO $$\nBEGIN\n  IF NOT EXISTS (\n    SELECT 1 FROM pg_trigger WHERE tgname = 'validate_event_venues_trigger'\n  ) THEN\n    CREATE TRIGGER validate_event_venues_trigger\n      BEFORE INSERT OR UPDATE ON events\n      FOR EACH ROW EXECUTE FUNCTION validate_event_venues();\n  END IF;\nEND $$;","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"---","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"\n🚀 Attempting to execute migration...","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"Applying migration: 029_add_ceremony_reception_venues.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:31"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 09:52:33"}
+{"level":"info","message":"✅ Migration applied successfully: 029_add_ceremony_reception_venues.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:52:33"}
+{"level":"info","message":"\n✅ All done!","service":"qrevent-backend","timestamp":"2026-02-08 09:52:33"}
+{"level":"info","message":"🔧 Database Migration Tool","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"========================","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"Found 46 migration(s):","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 001_add_avatar_url.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 001_create_rpc_functions.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 001_create_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 002_add_couple_names.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 002_add_files_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 003_secure_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 004_add_avatar_to_users.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 005_add_story_events_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 006_add_games_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 006_add_games_tables_fixed.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 006_create_families_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 007_add_guest_game_access.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 007_add_performance_indexes.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 007_create_family_invitations.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 008_add_dashboard_optimizations.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 008b_add_is_active_to_guests.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 009_add_feedback_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 009_create_wishes_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 010_create_seating_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 011_link_families_to_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 012_add_preferences_to_users.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 013_create_audit_logging.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 014_create_budget_items_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 015_add_quantity_unit_price.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 016_add_total_budget_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 017_add_budget_item_details.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 017_add_menu_settings_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 018_add_max_people_to_families.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 018_create_messages_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 019_make_description_nullable.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 019_secure_messages_rls.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 020_create_event_gallery_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 020_security_fixes.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 022_cleanup_test_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 023_consolidated_schema_optimization.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 024_create_robust_menu_system.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 025_enforce_event_isolation.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 026_secure_event_creation_function.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 028_add_family_id_to_qr_codes.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 029_add_ceremony_reception_venues.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 030_fix_qr_codes_trigger.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - 999_final_schema_sync.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - EXECUTE_IN_SUPABASE_SQL_EDITOR.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"  - add_avatar_url.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"\n📄 Migration to apply (029_add_ceremony_reception_venues.sql):","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"---","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"-- Migration 029: Add ceremony and reception venues support\n-- Enhances the events table to support separate venues for ceremony and reception\n\nDO $$ \nBEGIN\n  -- Add new columns for ceremony and reception venues\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' \n    AND column_name = 'ceremony_venue'\n  ) THEN\n    ALTER TABLE events ADD COLUMN ceremony_venue JSONB;\n  END IF;\n\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' \n    AND column_name = 'reception_venue'\n  ) THEN\n    ALTER TABLE events ADD COLUMN reception_venue JSONB;\n  END IF;\n\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' \n    AND column_name = 'ceremony_date'\n  ) THEN\n    ALTER TABLE events ADD COLUMN ceremony_date DATE;\n  END IF;\n\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' \n    AND column_name = 'ceremony_time'\n  ) THEN\n    ALTER TABLE events ADD COLUMN ceremony_time TIME;\n  END IF;\n\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' \n    AND column_name = 'reception_date'\n  ) THEN\n    ALTER TABLE events ADD COLUMN reception_date DATE;\n  END IF;\n\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' \n    AND column_name = 'reception_time'\n  ) THEN\n    ALTER TABLE events ADD COLUMN reception_time TIME;\n  END IF;\n\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' \n    AND column_name = 'venue_type'\n  ) THEN\n    ALTER TABLE events ADD COLUMN venue_type VARCHAR(20) DEFAULT 'single' \n    CHECK (venue_type IN ('single', 'separate'));\n  END IF;\n\n  -- Add indexes for performance\n  IF NOT EXISTS (\n    SELECT 1 FROM pg_indexes \n    WHERE tablename = 'events' \n    AND indexname = 'idx_events_ceremony_date'\n  ) THEN\n    CREATE INDEX idx_events_ceremony_date ON events(ceremony_date);\n  END IF;\n\n  IF NOT EXISTS (\n    SELECT 1 FROM pg_indexes \n    WHERE tablename = 'events' \n    AND indexname = 'idx_events_reception_date'\n  ) THEN\n    CREATE INDEX idx_events_reception_date ON events(reception_date);\n  END IF;\n\n  IF NOT EXISTS (\n    SELECT 1 FROM pg_indexes \n    WHERE tablename = 'events' \n    AND indexname = 'idx_events_venue_type'\n  ) THEN\n    CREATE INDEX idx_events_venue_type ON events(venue_type);\n  END IF;\n\nEND $$;\n\n-- Create a function to migrate existing events to new structure\nCREATE OR REPLACE FUNCTION migrate_existing_events_to_venues()\nRETURNS void AS $$\nBEGIN\n  -- Update existing events to use the new structure\n  -- If they have a location, consider it as ceremony venue for single venue type\n  UPDATE events \n  SET \n    venue_type = 'single',\n    ceremony_venue = COALESCE(location, '{\"name\": \"\", \"address\": \"\", \"city\": \"\", \"postalCode\": \"\"}'),\n    ceremony_date = date::DATE,\n    ceremony_time = date::TIME\n  WHERE venue_type IS NULL AND location IS NOT NULL;\n\n  -- For events without location, set default structure\n  UPDATE events \n  SET \n    venue_type = 'single',\n    ceremony_venue = '{\"name\": \"\", \"address\": \"\", \"city\": \"\", \"postalCode\": \"\"}',\n    ceremony_date = date::DATE,\n    ceremony_time = date::TIME\n  WHERE venue_type IS NULL AND location IS NULL;\n\n  -- Log the migration\n  RAISE NOTICE 'Migrated % events to new venue structure', \n    (SELECT COUNT(*) FROM events WHERE venue_type IS NOT NULL);\nEND;\n$$ LANGUAGE plpgsql;\n\n-- Execute the migration function\nSELECT migrate_existing_events_to_venues();\n\n-- Add comments for documentation\nCOMMENT ON COLUMN events.ceremony_venue IS 'JSONB object containing ceremony venue details: {name, address, city, postalCode, coordinates}';\nCOMMENT ON COLUMN events.reception_venue IS 'JSONB object containing reception venue details: {name, address, city, postalCode, coordinates}';\nCOMMENT ON COLUMN events.ceremony_date IS 'Date of the ceremony (separate from time for better UI/UX)';\nCOMMENT ON COLUMN events.ceremony_time IS 'Time of the ceremony';\nCOMMENT ON COLUMN events.reception_date IS 'Date of the reception (separate from time for better UI/UX)';\nCOMMENT ON COLUMN events.reception_time IS 'Time of the reception';\nCOMMENT ON COLUMN events.venue_type IS 'Type of venue: single (same venue for ceremony and reception) or separate';\n\n-- Create validation function\nCREATE OR REPLACE FUNCTION validate_event_venues()\nRETURNS trigger AS $$\nBEGIN\n  -- Validate venue_type and corresponding data\n  IF NEW.venue_type = 'separate' THEN\n    -- For separate venues, both ceremony and reception venues must be provided\n    IF NEW.ceremony_venue IS NULL OR NEW.reception_venue IS NULL THEN\n      RAISE EXCEPTION 'Both ceremony_venue and reception_venue must be provided for separate venue type';\n    END IF;\n    \n    IF NEW.ceremony_date IS NULL OR NEW.reception_date IS NULL THEN\n      RAISE EXCEPTION 'Both ceremony_date and reception_date must be provided for separate venue type';\n    END IF;\n  ELSE\n    -- For single venue, ceremony venue is required, reception venue should be null\n    IF NEW.ceremony_venue IS NULL THEN\n      RAISE EXCEPTION 'ceremony_venue is required for single venue type';\n    END IF;\n    \n    IF NEW.ceremony_date IS NULL THEN\n      RAISE EXCEPTION 'ceremony_date is required';\n    END IF;\n  END IF;\n  \n  RETURN NEW;\nEND;\n$$ LANGUAGE plpgsql;\n\n-- Create trigger for validation\nDO $$\nBEGIN\n  IF NOT EXISTS (\n    SELECT 1 FROM pg_trigger WHERE tgname = 'validate_event_venues_trigger'\n  ) THEN\n    CREATE TRIGGER validate_event_venues_trigger\n      BEFORE INSERT OR UPDATE ON events\n      FOR EACH ROW EXECUTE FUNCTION validate_event_venues();\n  END IF;\nEND $$;","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"---","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"\n🚀 Attempting to execute migration...","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"Applying migration: 029_add_ceremony_reception_venues.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:38"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 09:55:40"}
+{"level":"info","message":"✅ Migration applied successfully: 029_add_ceremony_reception_venues.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:40"}
+{"level":"info","message":"\n✅ All done!","service":"qrevent-backend","timestamp":"2026-02-08 09:55:40"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 09:55:47"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 09:55:47"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:47"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 09:55:47"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 09:55:47"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 09:55:49"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:49"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:49"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 09:55:51"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 09:55:51"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 09:55:52"}
+{"level":"info","message":"🔧 Database Migration Tool","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"========================","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"Found 47 migration(s):","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 001_add_avatar_url.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 001_create_rpc_functions.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 001_create_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 002_add_couple_names.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 002_add_files_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 003_secure_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 004_add_avatar_to_users.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 005_add_story_events_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 006_add_games_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 006_add_games_tables_fixed.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 006_create_families_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 007_add_guest_game_access.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 007_add_performance_indexes.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 007_create_family_invitations.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 008_add_dashboard_optimizations.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 008b_add_is_active_to_guests.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 009_add_feedback_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 009_create_wishes_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 010_create_seating_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 011_link_families_to_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 012_add_preferences_to_users.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 013_create_audit_logging.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 014_create_budget_items_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 015_add_quantity_unit_price.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 016_add_total_budget_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 017_add_budget_item_details.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 017_add_menu_settings_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 018_add_max_people_to_families.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 018_create_messages_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 019_make_description_nullable.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 019_secure_messages_rls.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 020_create_event_gallery_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 020_security_fixes.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 022_cleanup_test_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 023_consolidated_schema_optimization.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 024_create_robust_menu_system.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 025_enforce_event_isolation.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 026_secure_event_creation_function.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 028_add_family_id_to_qr_codes.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 029_add_ceremony_reception_venues.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 030_add_event_schedule.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 030_fix_qr_codes_trigger.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - 999_final_schema_sync.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - EXECUTE_IN_SUPABASE_SQL_EDITOR.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"  - add_avatar_url.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"\n📄 Migration to apply (030_add_event_schedule.sql):","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"---","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"-- Migration 030: Add simple event schedule support\n-- Replaces complex venue system with simple event schedule steps\n\nDO $$ \nBEGIN\n  -- Add event_schedule column to store the program steps\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' \n    AND column_name = 'event_schedule'\n  ) THEN\n    ALTER TABLE events ADD COLUMN event_schedule JSONB DEFAULT '[]';\n  END IF;\n\n  -- Add index for performance on schedule queries\n  IF NOT EXISTS (\n    SELECT 1 FROM pg_indexes \n    WHERE tablename = 'events' \n    AND indexname = 'idx_events_schedule'\n  ) THEN\n    CREATE INDEX idx_events_schedule ON events USING GIN (event_schedule);\n  END IF;\n\nEND $$;\n\n-- Create function to migrate existing venue data to schedule format\nCREATE OR REPLACE FUNCTION migrate_venues_to_schedule()\nRETURNS void AS $$\nBEGIN\n  -- Convert existing venue data to simple schedule format\n  UPDATE events \n  SET event_schedule = (\n    SELECT jsonb_agg(\n      jsonb_build_object(\n        'id', gen_random_uuid()::text,\n        'name', step_name,\n        'location', step_location,\n        'time', step_time\n      )\n    )\n    FROM (\n      VALUES \n        ('Cérémonie', \n         COALESCE(ceremony_venue->>'name', ceremony_venue->>'address', location->>'address', 'Lieu non défini'),\n         COALESCE(ceremony_time::text, '14:00')),\n        ('Réception',\n         COALESCE(reception_venue->>'name', reception_venue->>'address', ceremony_venue->>'address', location->>'address', 'Lieu non défini'),\n         COALESCE(reception_time::text, '18:00'))\n    ) AS schedule_data(step_name, step_location, step_time)\n    WHERE step_location != 'Lieu non défini' OR step_name = 'Cérémonie'\n  )\n  WHERE event_schedule = '[]' \n  AND (ceremony_venue IS NOT NULL OR location IS NOT NULL);\n\n  -- For events without venue data, set default schedule\n  UPDATE events \n  SET event_schedule = '[\n    {\"id\": \"1\", \"name\": \"Cérémonie\", \"location\": \"\", \"time\": \"14:00\"},\n    {\"id\": \"2\", \"name\": \"Réception\", \"location\": \"\", \"time\": \"18:00\"}\n  ]'::jsonb\n  WHERE event_schedule = '[]';\n\n  RAISE NOTICE 'Migrated % events to new schedule format', \n    (SELECT COUNT(*) FROM events WHERE event_schedule != '[]');\nEND;\n$$ LANGUAGE plpgsql;\n\n-- Execute the migration\nSELECT migrate_venues_to_schedule();\n\n-- Add validation function for schedule\nCREATE OR REPLACE FUNCTION validate_event_schedule()\nRETURNS trigger AS $$\nBEGIN\n  -- Validate that schedule is a proper JSON array\n  IF NEW.event_schedule IS NOT NULL THEN\n    -- Check if it's an array\n    IF jsonb_typeof(NEW.event_schedule) != 'array' THEN\n      RAISE EXCEPTION 'event_schedule must be a JSON array';\n    END IF;\n    \n    -- Validate each schedule item has required fields\n    IF EXISTS (\n      SELECT 1 \n      FROM jsonb_array_elements(NEW.event_schedule) as schedule_item\n      WHERE NOT (schedule_item ? 'name' AND schedule_item ? 'location' AND schedule_item ? 'time')\n    ) THEN\n      RAISE EXCEPTION 'Each schedule item must have name, location, and time fields';\n    END IF;\n  END IF;\n  \n  RETURN NEW;\nEND;\n$$ LANGUAGE plpgsql;\n\n-- Create trigger for schedule validation\nDO $$\nBEGIN\n  IF NOT EXISTS (\n    SELECT 1 FROM pg_trigger WHERE tgname = 'validate_event_schedule_trigger'\n  ) THEN\n    CREATE TRIGGER validate_event_schedule_trigger\n      BEFORE INSERT OR UPDATE ON events\n      FOR EACH ROW EXECUTE FUNCTION validate_event_schedule();\n  END IF;\nEND $$;\n\n-- Add comment for documentation\nCOMMENT ON COLUMN events.event_schedule IS 'JSONB array containing event schedule steps: [{\"id\": \"1\", \"name\": \"Cérémonie\", \"location\": \"Église\", \"time\": \"14:00\"}]';\n\n-- Clean up old venue columns (optional - comment out if you want to keep them)\n/*\nDO $$\nBEGIN\n  -- Remove old venue columns if they exist\n  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'events' AND column_name = 'ceremony_venue') THEN\n    ALTER TABLE events DROP COLUMN IF EXISTS ceremony_venue;\n  END IF;\n  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'events' AND column_name = 'reception_venue') THEN\n    ALTER TABLE events DROP COLUMN IF EXISTS reception_venue;\n  END IF;\n  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'events' AND column_name = 'ceremony_date') THEN\n    ALTER TABLE events DROP COLUMN IF EXISTS ceremony_date;\n  END IF;\n  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'events' AND column_name = 'ceremony_time') THEN\n    ALTER TABLE events DROP COLUMN IF EXISTS ceremony_time;\n  END IF;\n  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'events' AND column_name = 'reception_date') THEN\n    ALTER TABLE events DROP COLUMN IF EXISTS reception_date;\n  END IF;\n  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'events' AND column_name = 'reception_time') THEN\n    ALTER TABLE events DROP COLUMN IF EXISTS reception_time;\n  END IF;\n  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'events' AND column_name = 'venue_type') THEN\n    ALTER TABLE events DROP COLUMN IF EXISTS venue_type;\n  END IF;\nEND $$;\n*/","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"---","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"\n🚀 Attempting to execute migration...","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"Applying migration: 030_add_event_schedule.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:00:01"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:00:04"}
+{"0":"c","1":"e","10":"e","11":"n","12":"u","13":"e","14":" ","15":"i","16":"s","17":" ","18":"r","19":"e","2":"r","20":"q","21":"u","22":"i","23":"r","24":"e","25":"d","26":" ","27":"f","28":"o","29":"r","3":"e","30":" ","31":"s","32":"i","33":"n","34":"g","35":"l","36":"e","37":" ","38":"v","39":"e","4":"m","40":"n","41":"u","42":"e","43":" ","44":"t","45":"y","46":"p","47":"e","5":"o","6":"n","7":"y","8":"_","9":"v","level":"error","message":"❌ Failed to apply migration 030_add_event_schedule.sql:","service":"qrevent-backend","timestamp":"2026-02-08 10:00:04"}
+{"level":"info","message":"\n⚠️  Automatic migration failed.","service":"qrevent-backend","timestamp":"2026-02-08 10:00:04"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 10:01:27"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 10:01:28"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:28"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 10:01:28"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 10:01:28"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 10:01:28"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 10:01:28"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:28"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 10:01:28"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 10:01:28"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:01:29"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:01:29"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:30"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:30"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:30"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:30"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:01:32"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:01:32"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:32"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:32"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 10:01:33"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 10:01:33"}
+{"level":"info","message":"🩺 Database health monitoring started (interval: 60000ms)","service":"qrevent-backend","timestamp":"2026-02-08 10:01:33"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 10:01:33"}
+{"level":"info","message":"🔧 Database Migration Tool","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"========================","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"Found 48 migration(s):","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 001_add_avatar_url.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 001_create_rpc_functions.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 001_create_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 002_add_couple_names.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 002_add_files_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 003_secure_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 004_add_avatar_to_users.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 005_add_story_events_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 006_add_games_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 006_add_games_tables_fixed.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 006_create_families_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 007_add_guest_game_access.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 007_add_performance_indexes.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 007_create_family_invitations.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 008_add_dashboard_optimizations.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 008b_add_is_active_to_guests.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 009_add_feedback_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 009_create_wishes_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 010_create_seating_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 011_link_families_to_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 012_add_preferences_to_users.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 013_create_audit_logging.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 014_create_budget_items_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 015_add_quantity_unit_price.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 016_add_total_budget_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 017_add_budget_item_details.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 017_add_menu_settings_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 018_add_max_people_to_families.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 018_create_messages_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 019_make_description_nullable.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 019_secure_messages_rls.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 020_create_event_gallery_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 020_security_fixes.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 022_cleanup_test_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 023_consolidated_schema_optimization.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 024_create_robust_menu_system.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 025_enforce_event_isolation.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 026_secure_event_creation_function.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 028_add_family_id_to_qr_codes.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 029_add_ceremony_reception_venues.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 030_add_event_schedule.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 030_fix_qr_codes_trigger.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 031_add_simple_event_schedule.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - 999_final_schema_sync.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - EXECUTE_IN_SUPABASE_SQL_EDITOR.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"  - add_avatar_url.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"\n📄 Migration to apply (031_add_simple_event_schedule.sql):","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"---","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"-- Migration 031: Add simple event schedule support\n-- Simple approach: just add event_schedule column\n\nDO $$ \nBEGIN\n  -- Add event_schedule column to store the program steps\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' \n    AND column_name = 'event_schedule'\n  ) THEN\n    ALTER TABLE events ADD COLUMN event_schedule JSONB DEFAULT '[]';\n    RAISE NOTICE 'Added event_schedule column';\n  ELSE\n    RAISE NOTICE 'Column event_schedule already exists';\n  END IF;\n\n  -- Add index for performance on schedule queries\n  IF NOT EXISTS (\n    SELECT 1 FROM pg_indexes \n    WHERE tablename = 'events' \n    AND indexname = 'idx_events_schedule'\n  ) THEN\n    CREATE INDEX idx_events_schedule ON events USING GIN (event_schedule);\n    RAISE NOTICE 'Created index on event_schedule';\n  ELSE\n    RAISE NOTICE 'Index idx_events_schedule already exists';\n  END IF;\n\nEND $$;\n\n-- Set default schedule for existing events\nUPDATE events \nSET event_schedule = '[\n  {\"id\": \"1\", \"name\": \"Cérémonie\", \"location\": \"\", \"time\": \"14:00\"},\n  {\"id\": \"2\", \"name\": \"Réception\", \"location\": \"\", \"time\": \"18:00\"}\n]'::jsonb\nWHERE event_schedule = '[]' OR event_schedule IS NULL;\n\n-- Add comment for documentation\nCOMMENT ON COLUMN events.event_schedule IS 'JSONB array containing event schedule steps: [{\"id\": \"1\", \"name\": \"Cérémonie\", \"location\": \"Église\", \"time\": \"14:00\"}]';","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"---","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"\n🚀 Attempting to execute migration...","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"Applying migration: 031_add_simple_event_schedule.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:01:43"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:01:45"}
+{"0":"c","1":"e","10":"e","11":"n","12":"u","13":"e","14":" ","15":"i","16":"s","17":" ","18":"r","19":"e","2":"r","20":"q","21":"u","22":"i","23":"r","24":"e","25":"d","26":" ","27":"f","28":"o","29":"r","3":"e","30":" ","31":"s","32":"i","33":"n","34":"g","35":"l","36":"e","37":" ","38":"v","39":"e","4":"m","40":"n","41":"u","42":"e","43":" ","44":"t","45":"y","46":"p","47":"e","5":"o","6":"n","7":"y","8":"_","9":"v","level":"error","message":"❌ Failed to apply migration 031_add_simple_event_schedule.sql:","service":"qrevent-backend","timestamp":"2026-02-08 10:01:45"}
+{"level":"info","message":"\n⚠️  Automatic migration failed.","service":"qrevent-backend","timestamp":"2026-02-08 10:01:45"}
+{"0":"S","1":"t","10":"'","11":"t","12":" ","13":"w","14":"r","15":"i","16":"t","17":"e","18":"a","19":"b","2":"r","20":"l","21":"e","22":" ","23":"a","24":"n","25":"d","26":" ","27":"e","28":"n","29":"a","3":"e","30":"b","31":"l","32":"e","33":"O","34":"f","35":"f","36":"l","37":"i","38":"n","39":"e","4":"a","40":"Q","41":"u","42":"e","43":"u","44":"e","45":" ","46":"o","47":"p","48":"t","49":"i","5":"m","50":"o","51":"n","52":"s","53":" ","54":"i","55":"s","56":" ","57":"f","58":"a","59":"l","6":" ","60":"s","61":"e","7":"i","8":"s","9":"n","level":"warn","message":"Cache get error:","service":"qrevent-backend","timestamp":"2026-02-08 10:07:08"}
+{"0":"S","1":"t","10":"'","11":"t","12":" ","13":"w","14":"r","15":"i","16":"t","17":"e","18":"a","19":"b","2":"r","20":"l","21":"e","22":" ","23":"a","24":"n","25":"d","26":" ","27":"e","28":"n","29":"a","3":"e","30":"b","31":"l","32":"e","33":"O","34":"f","35":"f","36":"l","37":"i","38":"n","39":"e","4":"a","40":"Q","41":"u","42":"e","43":"u","44":"e","45":" ","46":"o","47":"p","48":"t","49":"i","5":"m","50":"o","51":"n","52":"s","53":" ","54":"i","55":"s","56":" ","57":"f","58":"a","59":"l","6":" ","60":"s","61":"e","7":"i","8":"s","9":"n","level":"warn","message":"Cache set error:","service":"qrevent-backend","timestamp":"2026-02-08 10:07:08"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 10:29:15","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 10:29:16","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","message":"🔧 Database Migration Tool","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"========================","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"Found 49 migration(s):","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 001_add_avatar_url.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 001_create_rpc_functions.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 001_create_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 002_add_couple_names.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 002_add_files_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 003_secure_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 004_add_avatar_to_users.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 005_add_story_events_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 006_add_games_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 006_add_games_tables_fixed.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 006_create_families_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 007_add_guest_game_access.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 007_add_performance_indexes.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 007_create_family_invitations.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 008_add_dashboard_optimizations.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 008b_add_is_active_to_guests.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 009_add_feedback_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 009_create_wishes_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 010_create_seating_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 011_link_families_to_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 012_add_preferences_to_users.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 013_create_audit_logging.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 014_create_budget_items_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 015_add_quantity_unit_price.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 016_add_total_budget_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 017_add_budget_item_details.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 017_add_menu_settings_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 018_add_max_people_to_families.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 018_create_messages_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 019_make_description_nullable.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 019_secure_messages_rls.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 020_create_event_gallery_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 020_security_fixes.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 022_cleanup_test_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 023_consolidated_schema_optimization.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 024_create_robust_menu_system.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 025_enforce_event_isolation.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 026_secure_event_creation_function.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 028_add_family_id_to_qr_codes.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 029_add_ceremony_reception_venues.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 030_add_event_schedule.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 030_fix_qr_codes_trigger.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 031_add_simple_event_schedule.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 032_add_partner_names_and_schedule.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - 999_final_schema_sync.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - EXECUTE_IN_SUPABASE_SQL_EDITOR.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"  - add_avatar_url.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"\n📄 Migration to apply (032_add_partner_names_and_schedule.sql):","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"---","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"-- Migration 032: Add partner names and ensure event schedule is properly configured\n-- Adds partner1_name, partner2_name, and ensures event_schedule column exists\n\nDO $$ \nBEGIN\n  -- Add partner names columns\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' \n    AND column_name = 'partner1_name'\n  ) THEN\n    ALTER TABLE events ADD COLUMN partner1_name VARCHAR(100);\n    RAISE NOTICE 'Added partner1_name column';\n  ELSE\n    RAISE NOTICE 'Column partner1_name already exists';\n  END IF;\n\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' \n    AND column_name = 'partner2_name'\n  ) THEN\n    ALTER TABLE events ADD COLUMN partner2_name VARCHAR(100);\n    RAISE NOTICE 'Added partner2_name column';\n  ELSE\n    RAISE NOTICE 'Column partner2_name already exists';\n  END IF;\n\n  -- Ensure event_schedule column exists\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' \n    AND column_name = 'event_schedule'\n  ) THEN\n    ALTER TABLE events ADD COLUMN event_schedule JSONB DEFAULT '[]';\n    RAISE NOTICE 'Added event_schedule column';\n  ELSE\n    RAISE NOTICE 'Column event_schedule already exists';\n  END IF;\n\n  -- Add index for performance on schedule queries\n  IF NOT EXISTS (\n    SELECT 1 FROM pg_indexes \n    WHERE tablename = 'events' \n    AND indexname = 'idx_events_schedule'\n  ) THEN\n    CREATE INDEX idx_events_schedule ON events USING GIN (event_schedule);\n    RAISE NOTICE 'Created index on event_schedule';\n  ELSE\n    RAISE NOTICE 'Index idx_events_schedule already exists';\n  END IF;\n\n  -- Add indexes for partner names\n  IF NOT EXISTS (\n    SELECT 1 FROM pg_indexes \n    WHERE tablename = 'events' \n    AND indexname = 'idx_events_partner1_name'\n  ) THEN\n    CREATE INDEX idx_events_partner1_name ON events(partner1_name);\n    RAISE NOTICE 'Created index on partner1_name';\n  ELSE\n    RAISE NOTICE 'Index idx_events_partner1_name already exists';\n  END IF;\n\n  IF NOT EXISTS (\n    SELECT 1 FROM pg_indexes \n    WHERE tablename = 'events' \n    AND indexname = 'idx_events_partner2_name'\n  ) THEN\n    CREATE INDEX idx_events_partner2_name ON events(partner2_name);\n    RAISE NOTICE 'Created index on partner2_name';\n  ELSE\n    RAISE NOTICE 'Index idx_events_partner2_name already exists';\n  END IF;\n\nEND $$;\n\n-- Set default schedule for existing events that don't have one\nUPDATE events \nSET event_schedule = '[\n  {\"id\": \"1\", \"name\": \"Cérémonie\", \"location\": \"\", \"time\": \"14:00\"},\n  {\"id\": \"2\", \"name\": \"Réception\", \"location\": \"\", \"time\": \"18:00\"}\n]'::jsonb\nWHERE event_schedule = '[]' OR event_schedule IS NULL;\n\n-- Migrate existing bride_name and groom_name to new partner fields if they exist\nDO $$\nBEGIN\n  -- Check if bride_name column exists and migrate data\n  IF EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' AND column_name = 'bride_name'\n  ) THEN\n    UPDATE events \n    SET partner2_name = bride_name \n    WHERE bride_name IS NOT NULL AND partner2_name IS NULL;\n    \n    RAISE NOTICE 'Migrated bride_name to partner2_name';\n  END IF;\n\n  -- Check if groom_name column exists and migrate data\n  IF EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' AND column_name = 'groom_name'\n  ) THEN\n    UPDATE events \n    SET partner1_name = groom_name \n    WHERE groom_name IS NOT NULL AND partner1_name IS NULL;\n    \n    RAISE NOTICE 'Migrated groom_name to partner1_name';\n  END IF;\nEND $$;\n\n-- Add comments for documentation\nCOMMENT ON COLUMN events.partner1_name IS 'Nom du premier partenaire (marié)';\nCOMMENT ON COLUMN events.partner2_name IS 'Nom du second partenaire (mariée)';\nCOMMENT ON COLUMN events.event_schedule IS 'JSONB array containing event schedule steps: [{\"id\": \"1\", \"name\": \"Cérémonie\", \"location\": \"Église\", \"time\": \"14:00\"}]';","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"---","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"\n🚀 Attempting to execute migration...","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"Applying migration: 032_add_partner_names_and_schedule.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:09"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:31:11"}
+{"0":"c","1":"e","10":"e","11":"n","12":"u","13":"e","14":" ","15":"i","16":"s","17":" ","18":"r","19":"e","2":"r","20":"q","21":"u","22":"i","23":"r","24":"e","25":"d","26":" ","27":"f","28":"o","29":"r","3":"e","30":" ","31":"s","32":"i","33":"n","34":"g","35":"l","36":"e","37":" ","38":"v","39":"e","4":"m","40":"n","41":"u","42":"e","43":" ","44":"t","45":"y","46":"p","47":"e","5":"o","6":"n","7":"y","8":"_","9":"v","level":"error","message":"❌ Failed to apply migration 032_add_partner_names_and_schedule.sql:","service":"qrevent-backend","timestamp":"2026-02-08 10:31:12"}
+{"level":"info","message":"\n⚠️  Automatic migration failed.","service":"qrevent-backend","timestamp":"2026-02-08 10:31:12"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 10:31:29"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 10:31:30"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:30"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 10:31:30"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 10:31:30"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 10:31:29"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 10:31:30"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:30"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 10:31:30"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 10:31:30"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:31:31"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:31:31"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:32"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:32"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:32"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:32"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:31:34"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:31:34"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:34"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:31:34"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 10:31:35"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 10:31:35"}
+{"level":"info","message":"🩺 Database health monitoring started (interval: 60000ms)","service":"qrevent-backend","timestamp":"2026-02-08 10:31:35"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 10:31:35"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 10:32:34"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 10:32:34"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:32:34"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 10:32:34"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 10:32:34"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 10:32:34"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 10:32:34"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:32:34"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 10:32:34"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 10:32:34"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:32:36"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:32:36"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:32:37"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:32:37"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:32:37"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:32:37"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:32:39"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:32:39"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:32:39"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:32:39"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 10:32:39"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 10:32:39"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 10:32:39"}
+{"level":"info","message":"🩺 Database health monitoring started (interval: 60000ms)","service":"qrevent-backend","timestamp":"2026-02-08 10:32:39"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 10:32:58"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 10:32:59"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:32:59"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 10:32:59"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 10:32:59"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 10:32:59"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 10:32:59"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:32:59"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 10:32:59"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 10:32:59"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:33:01"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:01"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:33:01"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:01"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:01"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:01"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:33:03"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:03"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:33:03"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 10:33:03"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 10:33:03"}
+{"level":"info","message":"🩺 Database health monitoring started (interval: 60000ms)","service":"qrevent-backend","timestamp":"2026-02-08 10:33:03"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:04"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 10:33:04"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 10:33:32"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 10:33:33"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:33"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 10:33:33"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 10:33:33"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:33:35"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:35"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:35"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:33:37"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:37"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 10:33:38"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 10:33:38"}
+{"level":"info","message":"🩺 Database health monitoring started (interval: 60000ms)","service":"qrevent-backend","timestamp":"2026-02-08 10:33:38"}
+{"level":"info","message":"🔧 Database Migration Tool","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"========================","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"Found 50 migration(s):","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 001_add_avatar_url.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 001_create_rpc_functions.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 001_create_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 002_add_couple_names.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 002_add_files_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 003_secure_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 004_add_avatar_to_users.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 005_add_story_events_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 006_add_games_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 006_add_games_tables_fixed.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 006_create_families_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 007_add_guest_game_access.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 007_add_performance_indexes.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 007_create_family_invitations.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 008_add_dashboard_optimizations.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 008b_add_is_active_to_guests.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 009_add_feedback_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 009_create_wishes_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 010_create_seating_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 011_link_families_to_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 012_add_preferences_to_users.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 013_create_audit_logging.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 014_create_budget_items_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 015_add_quantity_unit_price.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 016_add_total_budget_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 017_add_budget_item_details.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 017_add_menu_settings_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 018_add_max_people_to_families.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 018_create_messages_tables.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 019_make_description_nullable.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 019_secure_messages_rls.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 020_create_event_gallery_table.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 020_security_fixes.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 022_cleanup_test_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 023_consolidated_schema_optimization.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 024_create_robust_menu_system.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 025_enforce_event_isolation.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 026_secure_event_creation_function.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 028_add_family_id_to_qr_codes.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 029_add_ceremony_reception_venues.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 030_add_event_schedule.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 030_fix_qr_codes_trigger.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 031_add_simple_event_schedule.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 032_add_partner_names_and_schedule.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 033_simple_add_columns.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - 999_final_schema_sync.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - EXECUTE_IN_SUPABASE_SQL_EDITOR.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"  - add_avatar_url.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"\n📄 Migration to apply (033_simple_add_columns.sql):","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"---","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"-- Migration 033: Simple add columns (without validation conflicts)\n-- Adds partner1_name, partner2_name, and event_schedule columns\n\n-- Add partner1_name column\nDO $$ \nBEGIN\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' \n    AND column_name = 'partner1_name'\n  ) THEN\n    ALTER TABLE events ADD COLUMN partner1_name VARCHAR(100);\n  END IF;\nEND $$;\n\n-- Add partner2_name column\nDO $$ \nBEGIN\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' \n    AND column_name = 'partner2_name'\n  ) THEN\n    ALTER TABLE events ADD COLUMN partner2_name VARCHAR(100);\n  END IF;\nEND $$;\n\n-- Add event_schedule column\nDO $$ \nBEGIN\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns \n    WHERE table_name = 'events' \n    AND column_name = 'event_schedule'\n  ) THEN\n    ALTER TABLE events ADD COLUMN event_schedule JSONB DEFAULT '[]';\n  END IF;\nEND $$;\n\n-- Create indexes\nDO $$\nBEGIN\n  IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_events_schedule') THEN\n    CREATE INDEX idx_events_schedule ON events USING GIN (event_schedule);\n  END IF;\n  \n  IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_events_partner1') THEN\n    CREATE INDEX idx_events_partner1 ON events(partner1_name);\n  END IF;\n  \n  IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_events_partner2') THEN\n    CREATE INDEX idx_events_partner2 ON events(partner2_name);\n  END IF;\nEND $$;","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"---","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"\n🚀 Attempting to execute migration...","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"Applying migration: 033_simple_add_columns.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:56"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:33:57"}
+{"level":"info","message":"✅ Migration applied successfully: 033_simple_add_columns.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:33:58"}
+{"level":"info","message":"\n✅ All done!","service":"qrevent-backend","timestamp":"2026-02-08 10:33:58"}
+{"level":"info","message":"Redis not configured, using memory fallback for refresh tokens","service":"qrevent-backend","timestamp":"2026-02-08 10:37:54"}
+{"level":"info","message":"User logged in","service":"qrevent-backend","timestamp":"2026-02-08 10:37:54","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 10:37:55","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 10:37:56","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"0":"S","1":"t","10":"'","11":"t","12":" ","13":"w","14":"r","15":"i","16":"t","17":"e","18":"a","19":"b","2":"r","20":"l","21":"e","22":" ","23":"a","24":"n","25":"d","26":" ","27":"e","28":"n","29":"a","3":"e","30":"b","31":"l","32":"e","33":"O","34":"f","35":"f","36":"l","37":"i","38":"n","39":"e","4":"a","40":"Q","41":"u","42":"e","43":"u","44":"e","45":" ","46":"o","47":"p","48":"t","49":"i","5":"m","50":"o","51":"n","52":"s","53":" ","54":"i","55":"s","56":" ","57":"f","58":"a","59":"l","6":" ","60":"s","61":"e","7":"i","8":"s","9":"n","level":"warn","message":"Cache get error:","service":"qrevent-backend","timestamp":"2026-02-08 10:38:52"}
+{"0":"S","1":"t","10":"'","11":"t","12":" ","13":"w","14":"r","15":"i","16":"t","17":"e","18":"a","19":"b","2":"r","20":"l","21":"e","22":" ","23":"a","24":"n","25":"d","26":" ","27":"e","28":"n","29":"a","3":"e","30":"b","31":"l","32":"e","33":"O","34":"f","35":"f","36":"l","37":"i","38":"n","39":"e","4":"a","40":"Q","41":"u","42":"e","43":"u","44":"e","45":" ","46":"o","47":"p","48":"t","49":"i","5":"m","50":"o","51":"n","52":"s","53":" ","54":"i","55":"s","56":" ","57":"f","58":"a","59":"l","6":" ","60":"s","61":"e","7":"i","8":"s","9":"n","level":"warn","message":"Cache set error:","service":"qrevent-backend","timestamp":"2026-02-08 10:38:52"}
+{"code":"EPIPE","errno":-32,"level":"error","message":"Uncaught Exception: write EPIPE","service":"qrevent-backend","stack":"Error: write EPIPE\n    at afterWriteDispatched (node:internal/stream_base_commons:159:15)\n    at writeGeneric (node:internal/stream_base_commons:150:3)\n    at Socket._writeGeneric (node:net:971:11)\n    at Socket._write (node:net:983:8)\n    at writeOrBuffer (node:internal/streams/writable:572:12)\n    at _write (node:internal/streams/writable:501:10)\n    at Writable.write (node:internal/streams/writable:510:10)\n    at console.value (node:internal/console/constructor:298:16)\n    at console.warn (node:internal/console/constructor:405:26)\n    at /home/kevin/Qrevent/backendqrevent/routes/budget.js:500:21","syscall":"write","timestamp":"2026-02-08 10:40:19"}
+{"level":"info","message":"AuditService: Supabase client initialized for persistent logging","service":"qrevent-backend","timestamp":"2026-02-08 10:51:08"}
+{"level":"info","message":"Running database migrations on startup...","service":"qrevent-backend","timestamp":"2026-02-08 10:51:08"}
+{"level":"info","message":"Applying migration: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:51:08"}
+{"level":"info","message":"Redis: Connected successfully","service":"qrevent-backend","timestamp":"2026-02-08 10:51:08"}
+{"level":"info","message":"Redis: Ready to accept commands","service":"qrevent-backend","timestamp":"2026-02-08 10:51:08"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:51:11"}
+{"level":"info","message":"✅ Migration applied successfully: 021_add_guest_count_to_events.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:51:11"}
+{"level":"info","message":"Applying migration: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:51:11"}
+{"level":"info","message":"✅ Connected to database","service":"qrevent-backend","timestamp":"2026-02-08 10:51:13"}
+{"level":"info","message":"✅ Migration applied successfully: 027_ensure_max_people_column.sql","service":"qrevent-backend","timestamp":"2026-02-08 10:51:13"}
+{"level":"info","message":"Database migrations completed successfully","service":"qrevent-backend","timestamp":"2026-02-08 10:51:13"}
+{"level":"info","message":"Qrevent backend server running on port 5000 in development mode","service":"qrevent-backend","timestamp":"2026-02-08 10:51:13"}
+{"level":"info","message":"🩺 Database health monitoring started (interval: 60000ms)","service":"qrevent-backend","timestamp":"2026-02-08 10:51:13"}
+{"0":"S","1":"t","10":"'","11":"t","12":" ","13":"w","14":"r","15":"i","16":"t","17":"e","18":"a","19":"b","2":"r","20":"l","21":"e","22":" ","23":"a","24":"n","25":"d","26":" ","27":"e","28":"n","29":"a","3":"e","30":"b","31":"l","32":"e","33":"O","34":"f","35":"f","36":"l","37":"i","38":"n","39":"e","4":"a","40":"Q","41":"u","42":"e","43":"u","44":"e","45":" ","46":"o","47":"p","48":"t","49":"i","5":"m","50":"o","51":"n","52":"s","53":" ","54":"i","55":"s","56":" ","57":"f","58":"a","59":"l","6":" ","60":"s","61":"e","7":"i","8":"s","9":"n","level":"warn","message":"Cache get error:","service":"qrevent-backend","timestamp":"2026-02-08 10:52:35"}
+{"0":"S","1":"t","10":"'","11":"t","12":" ","13":"w","14":"r","15":"i","16":"t","17":"e","18":"a","19":"b","2":"r","20":"l","21":"e","22":" ","23":"a","24":"n","25":"d","26":" ","27":"e","28":"n","29":"a","3":"e","30":"b","31":"l","32":"e","33":"O","34":"f","35":"f","36":"l","37":"i","38":"n","39":"e","4":"a","40":"Q","41":"u","42":"e","43":"u","44":"e","45":" ","46":"o","47":"p","48":"t","49":"i","5":"m","50":"o","51":"n","52":"s","53":" ","54":"i","55":"s","56":" ","57":"f","58":"a","59":"l","6":" ","60":"s","61":"e","7":"i","8":"s","9":"n","level":"warn","message":"Cache set error:","service":"qrevent-backend","timestamp":"2026-02-08 10:52:35"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 11:04:07","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 11:40:49","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 11:41:49","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 11:42:25","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 11:42:26","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 11:43:48","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 11:45:00","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 11:46:01","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 11:47:03","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 11:48:04","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 11:48:46","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 11:48:47","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 11:53:16","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 11:53:17","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 11:53:58","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 11:53:59","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:00:55","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:00:57","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:04:10","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:04:11","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:23:08","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:23:09","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:28:52","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:28:53","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:30:42","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:30:43","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:35:09","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:35:10","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:35:22","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:35:23","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:36:31","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:36:32","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:37:45","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:37:46","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:38:05","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:38:06","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:38:14","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:38:15","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:45:28","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:45:29","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:49:58","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:49:59","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:52:12","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:52:13","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:53:37","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:53:37","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:55:47","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:55:48","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:56:08","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:56:09","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:58:04","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:58:05","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:58:15","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:58:17","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:59:42","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:59:43","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:59:50","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 12:59:51","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 13:01:04","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
+{"level":"info","limit":50,"message":"GET /invitations - Fetching events for user","page":1,"service":"qrevent-backend","timestamp":"2026-02-08 13:01:05","userEmail":"andriatsilavokevin@gmail.com","userId":"97324839-b03d-41f1-bef4-47011885453a"}
