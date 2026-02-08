@@ -63,11 +63,19 @@ const authenticateToken = async (req, res, next) => {
       });
     }
 
-    if (!user || !user.is_active) {
+    if (!user) {
       setAuthErrorHeaders(res);
       return res.status(401).json({
         success: false,
-        message: 'Invalid session - user not found or inactive'
+        message: 'Invalid session'
+      });
+    }
+    
+    if (!user.is_active) {
+      setAuthErrorHeaders(res);
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid session'
       });
     }
 
@@ -162,7 +170,21 @@ const checkEventOwnership = async (req, res, next) => {
       });
     }
 
-    if (event.organizer_id !== req.user.id) {
+    // 🛡️ SECURITY FIX: Strict comparison to prevent type coercion IDOR
+    const eventOrganizerId = String(event.organizer_id).trim();
+    const userId = String(req.user.id).trim();
+    
+    if (eventOrganizerId !== userId) {
+      // 🛡️ SECURITY: Log potential IDOR attempt
+      logger.warn('🚨 Potential IDOR attempt detected', {
+        eventOrganizerId,
+        userId,
+        ip: req.ip,
+        path: req.path,
+        eventId: req.params.eventId,
+        userAgent: req.get('User-Agent')?.substring(0, 100)
+      });
+      
       setAuthErrorHeaders(res);
       return res.status(403).json({
         success: false,

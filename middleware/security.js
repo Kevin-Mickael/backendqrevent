@@ -52,10 +52,21 @@ const limiter = rateLimit({
     return 200; // Général
   },
   keyGenerator: (req) => {
-    // 🛡️ SECURITY: Use secure IP function to prevent spoofing
-    const baseKey = getClientIp(req);
+    // 🛡️ SECURITY FIX: Enhanced fingerprint to prevent bypass
+    const baseIp = getClientIp(req);
+    const userAgent = req.headers['user-agent']?.substring(0, 50) || '';
+    const acceptLang = req.headers['accept-language']?.substring(0, 30) || '';
     const userKey = req.user?.id ? `:user:${req.user.id}` : '';
-    return `${baseKey}${userKey}`;
+    
+    // Create multi-factor fingerprint
+    const components = [baseIp, userAgent, acceptLang, userKey].join('|');
+    const fingerprint = require('crypto')
+      .createHash('sha256')
+      .update(components)
+      .digest('hex')
+      .substring(0, 16);
+      
+    return `rl:${fingerprint}`;
   },
   handler: (req, res, next, options) => {
     logger.warn('🚫 General rate limit exceeded', {
@@ -344,6 +355,7 @@ const validateQRCode = (req, res, next) => {
 // ============================================
 const { sanitizeForLogging } = require('../utils/sanitize');
 
+// 🛡️ ENHANCED: Suspicious activity detection with security events
 const suspiciousActivityLogger = (req, res, next) => {
   const suspiciousPatterns = [
     /<script/i,
@@ -370,13 +382,26 @@ const suspiciousActivityLogger = (req, res, next) => {
   );
   
   if (hasSuspiciousContent) {
-    logger.warn('🚨 Suspicious activity detected', {
+    // 🛡️ SECURITY: Enhanced logging with threat classification
+    const securityEvent = {
+      event: 'SUSPICIOUS_ACTIVITY',
+      severity: 'HIGH',
       ip: getClientIp(req),
       path: req.path,
       userAgent: req.get('User-Agent')?.substring(0, 200),
       // 🛡️ Sanitize body to prevent log injection
       body: bodyStr.substring(0, 500).replace(/[\n\r\x00-\x1F\x7F]/g, ''),
+      timestamp: new Date().toISOString(),
+      correlationId: require('crypto').randomUUID(),
       sanitized: true
+    };
+    
+    logger.warn('🚨 Suspicious activity detected', securityEvent);
+    
+    // 🛡️ Store in audit table (async, no performance impact)
+    setImmediate(() => {
+      require('../utils/database').users.logSecurityEvent?.(securityEvent)
+        .catch(err => logger.debug('Security audit log failed:', err.message));
     });
   }
   

@@ -11,6 +11,7 @@ const gamesDb = require('./db/games');
 const feedbackDb = require('./db/feedback');
 const wishesDb = require('./db/wishes');
 const seatingTablesDb = require('./db/seatingTables');
+const menusDb = require('./db/menus');
 
 
 module.exports = {
@@ -26,6 +27,6 @@ module.exports = {
   games: gamesDb,
   feedback: feedbackDb,
   wishes: wishesDb,
-  seatingTables: seatingTablesDb
-
+  seatingTables: seatingTablesDb,
+  menus: menusDb
 };

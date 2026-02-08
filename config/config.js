@@ -94,4 +94,6 @@ module.exports = {
   r2Bucket: process.env.R2_BUCKET,
   r2Endpoint: process.env.R2_ENDPOINT,
   r2PublicUrl: process.env.R2_PUBLIC_URL,
+  // Frontend URL for QR codes and redirects
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
 };

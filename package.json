@@ -23,7 +23,9 @@
     "jobs:refresh-views:daemon": "node jobs/refreshMaterializedViews.js",
     "monitor": "node scripts/monitor-performance.js",
     "load-test:dashboard": "k6 run load-tests/dashboard-load-test.js",
-    "load-test:game": "k6 run load-tests/game-load-test.js"
+    "load-test:game": "k6 run load-tests/game-load-test.js",
+    "apply-migration": "node apply-migration.js",
+    "test-qr": "node test-qr-link.js"
   },
   "keywords": [
     "qrevent",

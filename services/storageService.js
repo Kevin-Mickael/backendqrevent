@@ -59,7 +59,116 @@ class StorageService {
     }
 
     /**
-     * Uploads a file to R2
+     * Uploads a file to R2 with structured path
+     * @param {Object} file - The file object from multer (buffer, originalname, mimetype)
+     * @param {string} userId - User ID for path building
+     * @param {string} eventId - Event ID (optional)
+     * @param {string} type - File type (avatars, menus, banners, etc.)
+     * @param {string} category - Category (optional, for menus)
+     * @returns {Promise<string>} The public URL of the uploaded file
+     */
+    async uploadFileStructured(file, userId, eventId = null, type, category = null) {
+        if (!this.isConfigured()) {
+            throw new Error('Storage service not configured. Set R2 environment variables.');
+        }
+        
+        if (!file) {
+            throw new Error('No file provided');
+        }
+
+        const pathBuilder = require('./pathBuilder');
+        
+        // Validation des paramètres
+        pathBuilder.validateParams(userId, eventId);
+
+        const isVideo = this.isVideoFile(file.mimetype);
+        const isImage = this.isImageFile(file.mimetype);
+
+        console.log(`Uploading ${isVideo ? 'video' : isImage ? 'image' : 'file'} to R2:`, {
+            originalname: file.originalname,
+            mimetype: file.mimetype,
+            size: file.size ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : 'unknown',
+            userId,
+            eventId,
+            type,
+            category
+        });
+
+        // Construction du chemin structuré
+        let folder;
+        switch (type) {
+            case 'avatars':
+                folder = pathBuilder.buildAvatarPath(userId);
+                break;
+            case 'banners':
+                folder = pathBuilder.buildBannerPath(userId, eventId);
+                break;
+            case 'covers':
+                folder = pathBuilder.buildCoverPath(userId, eventId);
+                break;
+            case 'menus':
+                folder = pathBuilder.buildMenuPath(userId, eventId, category);
+                break;
+            case 'gallery':
+                folder = pathBuilder.buildGalleryPath(userId, eventId);
+                break;
+            case 'qr-codes':
+                folder = pathBuilder.buildQrCodePath(userId, eventId);
+                break;
+            case 'messages':
+                folder = pathBuilder.buildMessagePath(userId, eventId);
+                break;
+            case 'temp':
+                folder = pathBuilder.buildTempPath(userId);
+                break;
+            default:
+                throw new Error(`Type de fichier non supporté: ${type}`);
+        }
+
+        const fileName = pathBuilder.generateUniqueFileName(file.originalname, type);
+        const key = `${folder}/${fileName}`;
+
+        // Configuration de base pour tous les fichiers
+        const uploadParams = {
+            Bucket: this.bucket,
+            Key: key,
+            Body: file.buffer,
+            ContentType: file.mimetype,
+            Metadata: {
+                'user-id': userId,
+                'event-id': eventId || '',
+                'file-type': type,
+                'category': category || '',
+                'original-name': file.originalname
+            }
+        };
+
+        // Headers spécifiques selon le type de fichier
+        if (isVideo) {
+            uploadParams.Metadata['streaming-support'] = 'true';
+        } else {
+            uploadParams.Metadata['cors-enabled'] = 'true';
+        }
+
+        const command = new PutObjectCommand(uploadParams);
+
+        try {
+            await this.client.send(command);
+            console.log(`File uploaded successfully to R2: ${key}`);
+            
+            // Return the public URL
+            if (process.env.R2_PUBLIC_URL) {
+                return `${process.env.R2_PUBLIC_URL}/${key}`;
+            }
+            return `${this.publicUrl}/${key}`;
+        } catch (error) {
+            console.error('Error uploading file to R2:', error);
+            throw new Error(`Failed to upload file: ${error.message}`);
+        }
+    }
+
+    /**
+     * Legacy method for backward compatibility
      * @param {Object} file - The file object from multer (buffer, originalname, mimetype)
      * @param {string} folder - Optional folder prefix (e.g., 'events', 'avatars')
      * @returns {Promise<string>} The public URL of the uploaded file

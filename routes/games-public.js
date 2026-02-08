@@ -9,16 +9,24 @@ const logger = require('../utils/logger');
 
 const router = express.Router();
 
-// Validation schemas
+// Validation schemas - simplified to accept various formats
 const playGameSchema = celebrate({
   [Segments.BODY]: Joi.object().keys({
-    answers: Joi.array().items(Joi.object({
-      questionId: Joi.string().uuid().required(),
-      answer: Joi.string().required(),
-      timeSpent: Joi.number().integer().min(0).optional()
-    })).required(),
-    playerName: Joi.string().max(100).optional()
-  })
+    answers: Joi.alternatives().try(
+      Joi.array().items(Joi.object({
+        questionId: Joi.string().uuid().required(),
+        answer: Joi.alternatives().try(Joi.string().allow(''), Joi.boolean()).required(),
+        timeSpent: Joi.number().integer().min(0).optional()
+      })),
+      Joi.object().pattern(Joi.string(), Joi.object({
+        questionId: Joi.string().uuid().required(),
+        answer: Joi.alternatives().try(Joi.string().allow(''), Joi.boolean()).required(),
+        timeSpent: Joi.number().integer().min(0).optional()
+      }))
+    ).required(),
+    playerName: Joi.alternatives().try(Joi.string().max(100).allow(''), Joi.any()).optional(),
+    accessToken: Joi.string().optional()
+  }).unknown(true)
 });
 
 // ==================== ROUTES PUBLIQUES POUR INVITÉS ====================
@@ -95,11 +103,52 @@ router.get('/public/:gameId', authenticateGuest, async (req, res) => {
   }
 });
 
+// Helper to get client IP
+function getClientIP(req) {
+  return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
+         req.headers['x-real-ip'] || 
+         req.connection?.remoteAddress || 
+         req.socket?.remoteAddress ||
+         req.ip ||
+         'unknown';
+}
+
 // POST /api/games/public/:gameId/play - Jouer à un jeu
 router.post('/public/:gameId/play', authenticateGuest, playGameSchema, async (req, res) => {
   try {
     const { gameId } = req.params;
     const { answers, playerName } = req.body;
+    
+    // 🛡️ DEBUG: Log incoming request details
+    console.log('[PlayGame] Request received:', {
+      gameId,
+      body: req.body,
+      bodyType: typeof req.body,
+      answersType: typeof answers,
+      isArray: Array.isArray(answers),
+      answersLength: answers ? (Array.isArray(answers) ? answers.length : Object.keys(answers).length) : 0,
+      playerName,
+      token: req.query.token || req.body.accessToken,
+      guest: req.guest ? { 
+        event_id: req.guest.event_id, 
+        accessType: req.guest.accessType,
+        guest_id: req.guest.guest_id,
+        family_id: req.guest.family_id
+      } : null
+    });
+    
+    // 🛡️ SECURITY: Verify guest authentication
+    if (!req.guest) {
+      console.error('[PlayGame] ❌ No guest data in request');
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+    
+    // 🛡️ SECURITY: Get and check client IP
+    const clientIP = getClientIP(req);
+    console.log('[IP Check] Game:', gameId, 'IP:', clientIP);
 
     // Vérifier que le jeu existe et est actif
     const game = await games.getGameWithQuestions(gameId);
@@ -110,6 +159,15 @@ router.post('/public/:gameId/play', authenticateGuest, playGameSchema, async (re
       });
     }
 
+    // 🛡️ SECURITY: Verify guest has event_id
+    if (!req.guest.event_id) {
+      console.error('[PlayGame] ❌ Guest has no event_id:', req.guest);
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid guest data: missing event_id'
+      });
+    }
+    
     // 🛡️ SECURITY: Verify that the game belongs to the guest's event (IDOR protection)
     if (game.event_id !== req.guest.event_id) {
       console.warn('[IDOR Attempt] Guest tried to play game from different event:', {
@@ -123,20 +181,41 @@ router.post('/public/:gameId/play', authenticateGuest, playGameSchema, async (re
       });
     }
 
-    // Vérifier si déjà joué
+    // 🛡️ SECURITY: Check if this IP has already played this game
+    const { data: existingIP, error: ipError } = await supabaseService
+      .from('game_ip_tracking')
+      .select('*')
+      .eq('game_id', gameId)
+      .eq('ip_address', clientIP)
+      .single();
+    
+    if (ipError && ipError.code !== 'PGRST116') { // PGRST116 = not found, which is expected
+      console.error('[IP Check] Error:', ipError);
+    }
+    
+    if (existingIP) {
+      console.warn('[IP Blocked] IP already played:', clientIP, 'Game:', gameId);
+      return res.status(403).json({
+        success: false,
+        message: 'Vous avez déjà joué à ce jeu depuis cet appareil. Chaque participant ne peut jouer qu\'une seule fois.',
+        code: 'ALREADY_PLAYED_IP'
+      });
+    }
+
+    // Vérifier si déjà joué (par token/access)
     const { data: existingParticipation } = await supabaseService
       .from('game_participations')
       .select('*')
       .eq('game_id', gameId)
-      .eq(req.guest.accessType === 'family' ? 'family_id' : 'guest_id', 
-           req.guest.accessType === 'family' ? req.guest.family_id : req.guest.guest_id)
+      .eq('access_token', req.query.token || req.body.accessToken)
       .eq('is_completed', true)
       .single();
 
     if (existingParticipation) {
       return res.status(403).json({
         success: false,
-        message: 'You have already completed this game',
+        message: 'Vous avez déjà terminé ce jeu',
+        code: 'ALREADY_PLAYED',
         data: {
           score: existingParticipation.total_score,
           rank: existingParticipation.rank
@@ -144,12 +223,28 @@ router.post('/public/:gameId/play', authenticateGuest, playGameSchema, async (re
       });
     }
 
+    // Normalize answers to array (handle both array and object with numeric keys)
+    let answersArray = answers;
+    if (!Array.isArray(answers) && typeof answers === 'object') {
+      answersArray = Object.values(answers);
+    }
+    
+    // 🛡️ SECURITY: Validate answers array
+    if (!Array.isArray(answersArray) || answersArray.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid answers format'
+      });
+    }
+    
+    console.log('[Play] Processing', answersArray.length, 'answers');
+
     // Calculer le score
     let totalScore = 0;
     let correctAnswers = 0;
     const answerRecords = [];
 
-    for (const userAnswer of answers) {
+    for (const userAnswer of answersArray) {
       const question = game.questions.find(q => q.id === userAnswer.questionId);
       if (!question) continue;
 
@@ -199,31 +294,41 @@ router.post('/public/:gameId/play', authenticateGuest, playGameSchema, async (re
     }
 
     // Créer ou mettre à jour la participation
+    const accessType = req.guest.accessType || 'public';
+    
+    // 🛡️ DEBUG: Log participation data before insert
+    const participationData = {
+      game_id: gameId,
+      guest_id: accessType === 'individual' ? req.guest.guest_id : null,
+      family_id: accessType === 'family' ? req.guest.family_id : null,
+      qr_code: req.guest.qr_code,
+      access_token: req.query.token || req.body.accessToken,
+      player_name: playerName || (accessType === 'family' ? 'Famille' : 'Invité'),
+      player_type: accessType,
+      total_score: totalScore,
+      correct_answers: correctAnswers,
+      total_answers: answersArray.length,
+      is_completed: true,
+      completed_at: new Date().toISOString()
+    };
+    console.log('[PlayGame] Inserting participation:', participationData);
+    
     const { data: participation, error: partError } = await supabaseService
       .from('game_participations')
-      .insert([{
-        game_id: gameId,
-        guest_id: req.guest.accessType === 'individual' ? req.guest.guest_id : null,
-        family_id: req.guest.accessType === 'family' ? req.guest.family_id : null,
-        qr_code: req.guest.qr_code,
-        access_token: req.query.token || req.body.accessToken,
-        player_name: playerName || (req.guest.accessType === 'family' ? 'Famille' : 'Invité'),
-        player_type: req.guest.accessType,
-        total_score: totalScore,
-        correct_answers: correctAnswers,
-        total_answers: answers.length,
-        is_completed: true,
-        completed_at: new Date().toISOString()
-      }])
+      .insert([participationData])
       .select()
       .single();
 
     if (partError) {
+      console.error('[PlayGame] ❌ Error inserting participation:', partError);
       throw partError;
     }
+    
+    console.log('[PlayGame] ✅ Participation inserted:', participation.id);
 
     // Enregistrer les réponses détaillées
     if (answerRecords.length > 0) {
+      console.log('[PlayGame] Saving answers:', answerRecords.map(a => ({...a, participation_id: participation.id})));
       const { error: answersError } = await supabaseService
         .from('game_answers')
         .insert(answerRecords.map(a => ({
@@ -232,11 +337,14 @@ router.post('/public/:gameId/play', authenticateGuest, playGameSchema, async (re
         })));
 
       if (answersError) {
+        console.error('[PlayGame] ❌ Error saving answers:', answersError);
         logger.error('Error saving answers:', { error: answersError.message });
+      } else {
+        console.log('[PlayGame] ✅ Answers saved successfully');
       }
     }
 
-    // Mettre à jour le statut dans la table d'accès
+    // Mettre à jour le statut dans la table d'accès (si l'accès existe dans les tables)
     if (req.guest.accessType === 'family' && req.guest.id) {
       await supabaseService
         .from('game_family_access')
@@ -256,13 +364,39 @@ router.post('/public/:gameId/play', authenticateGuest, playGameSchema, async (re
         })
         .eq('id', req.guest.id);
     }
+    // Pour l'accès public (pas d'ID dans game_guest_access), on ne met à jour aucune table d'accès
+    // La participation est déjà enregistrée dans game_participations
+    
+    // 🛡️ SECURITY: Record IP address to prevent multiple plays
+    try {
+      await supabaseService
+        .from('game_ip_tracking')
+        .insert([{
+          game_id: gameId,
+          ip_address: clientIP,
+          user_agent: req.headers['user-agent'] || null,
+          score: totalScore,
+          player_name: playerName || 'Anonyme'
+        }]);
+      console.log('[IP Recorded] IP:', clientIP, 'Game:', gameId);
+    } catch (ipRecordError) {
+      // Log but don't fail the request if IP recording fails
+      console.error('[IP Record] Error:', ipRecordError.message);
+    }
 
     // Récupérer le classement mis à jour
-    const { data: leaderboard } = await supabaseService
+    console.log('[PlayGame] Fetching leaderboard for game:', gameId);
+    const { data: leaderboard, error: leaderboardError } = await supabaseService
       .from('game_leaderboard')
       .select('*')
       .eq('game_id', gameId)
       .order('rank', { ascending: true });
+
+    if (leaderboardError) {
+      console.error('[PlayGame] ❌ Error fetching leaderboard:', leaderboardError);
+    } else {
+      console.log('[PlayGame] ✅ Leaderboard fetched:', leaderboard?.length || 0, 'entries');
+    }
 
     const playerRank = leaderboard?.find(p => p.participation_id === participation.id)?.rank;
 
@@ -278,10 +412,130 @@ router.post('/public/:gameId/play', authenticateGuest, playGameSchema, async (re
       }
     });
   } catch (error) {
-    logger.error('Error playing game:', { error: error.message });
+    // 🛡️ SECURITY: Log detailed error for audit and debugging
+    logger.error('Error playing game:', { 
+      error: error.message,
+      stack: error.stack,
+      gameId: req.params.gameId,
+      guestEventId: req.guest?.event_id,
+      guestType: req.guest?.accessType,
+      playerName: req.body?.playerName
+    });
+    
+    // Return detailed error message in development, generic in production
+    const isDev = process.env.NODE_ENV === 'development';
     res.status(500).json({
       success: false,
-      message: 'Server error while processing game'
+      message: 'Server error while processing game',
+      error: isDev ? error.message : undefined
+    });
+  }
+});
+
+// POST /api/games/public/:gameId/validate-answer - Valider une réponse individuelle
+router.post('/public/:gameId/validate-answer', authenticateGuest, async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const { questionId, answer } = req.body;
+    
+    // 🛡️ SECURITY: Check if IP has already played
+    const clientIP = getClientIP(req);
+    const { data: existingIP } = await supabaseService
+      .from('game_ip_tracking')
+      .select('*')
+      .eq('game_id', gameId)
+      .eq('ip_address', clientIP)
+      .single();
+    
+    if (existingIP) {
+      return res.status(403).json({
+        success: false,
+        message: 'Vous avez déjà joué à ce jeu depuis cet appareil.',
+        code: 'ALREADY_PLAYED_IP'
+      });
+    }
+
+    // Récupérer le jeu avec les questions
+    const game = await games.getGameWithQuestions(gameId);
+    if (!game || !game.is_active) {
+      return res.status(404).json({
+        success: false,
+        message: 'Game not found'
+      });
+    }
+
+    // Vérifier que le jeu appartient à l'événement de l'invité
+    if (game.event_id !== req.guest.event_id) {
+      return res.status(403).json({
+        success: false,
+        message: 'This game is not part of your event'
+      });
+    }
+
+    // Trouver la question
+    const question = game.questions.find(q => q.id === questionId);
+    if (!question) {
+      return res.status(404).json({
+        success: false,
+        message: 'Question not found'
+      });
+    }
+
+    // Vérifier la réponse
+    let isCorrect = false;
+    let correctAnswer = null;
+
+    console.log('[Validate] Question:', question.question);
+    console.log('[Validate] Question type:', question.question_type);
+    console.log('[Validate] User answer:', answer);
+    console.log('[Validate] Options:', question.options);
+
+    switch (question.question_type) {
+      case 'multiple_choice':
+        const correctOption = question.options?.find(opt => opt.isCorrect);
+        correctAnswer = correctOption?.text || '';
+        console.log('[Validate] Correct option:', correctOption);
+        console.log('[Validate] Correct answer text:', correctAnswer);
+        if (correctOption && correctOption.text === answer) {
+          isCorrect = true;
+        }
+        break;
+      
+      case 'text':
+        correctAnswer = question.correct_answer || '';
+        if (question.correct_answer && 
+            question.correct_answer.toLowerCase().trim() === answer.toLowerCase().trim()) {
+          isCorrect = true;
+        }
+        break;
+      
+      case 'boolean':
+        correctAnswer = question.correct_answer || '';
+        if (question.correct_answer === answer) {
+          isCorrect = true;
+        }
+        break;
+      
+      default:
+        correctAnswer = question.correct_answer || '';
+    }
+
+    console.log('[Validate] Response:', { isCorrect, correctAnswer, userAnswer: answer });
+
+    res.json({
+      success: true,
+      data: {
+        isCorrect,
+        correctAnswer,
+        userAnswer: answer,
+        points: isCorrect ? question.points : 0
+      }
+    });
+  } catch (error) {
+    logger.error('Error validating answer:', { error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Server error while validating answer'
     });
   }
 });
@@ -299,35 +553,73 @@ router.get('/public/:gameId/leaderboard', optionalGuestAuth, async (req, res) =>
       });
     }
 
-    // Récupérer le classement
-    const { data: leaderboard, error } = await supabaseService
-      .from('game_leaderboard')
-      .select('rank, player_display_name, total_score, correct_answers, total_answers, completed_at, player_type')
+    // Récupérer le classement depuis la table game_participations
+    const { data: participations, error } = await supabaseService
+      .from('game_participations')
+      .select(`
+        id,
+        total_score,
+        correct_answers,
+        total_answers,
+        completed_at,
+        player_name,
+        player_type,
+        family_id,
+        guest_id,
+        rank
+      `)
       .eq('game_id', gameId)
-      .order('rank', { ascending: true })
+      .eq('is_completed', true)
+      .order('total_score', { ascending: false })
+      .order('completed_at', { ascending: true })
       .limit(50);
 
     if (error) {
       throw error;
     }
 
-    // Anonymiser les noms si le jeu n'est pas terminé et que ce n'est pas l'organisateur
-    const sanitizedLeaderboard = leaderboard?.map((entry, index) => ({
-      rank: entry.rank || index + 1,
-      playerName: entry.player_display_name || (entry.player_type === 'family' ? 'Une famille' : 'Un invité'),
-      score: entry.total_score,
-      correctAnswers: entry.correct_answers,
-      totalAnswers: entry.total_answers,
-      isTop3: index < 3
-    })) || [];
+    // Récupérer les noms des familles et invités si nécessaire
+    const leaderboard = await Promise.all((participations || []).map(async (entry, index) => {
+      let playerName = entry.player_name;
+      
+      // Si pas de player_name, essayer de récupérer le nom
+      if (!playerName) {
+        if (entry.family_id) {
+          const { data: family } = await supabaseService
+            .from('families')
+            .select('name')
+            .eq('id', entry.family_id)
+            .single();
+          playerName = family?.name || 'Une famille';
+        } else if (entry.guest_id) {
+          const { data: guest } = await supabaseService
+            .from('guests')
+            .select('first_name, last_name')
+            .eq('id', entry.guest_id)
+            .single();
+          playerName = guest ? `${guest.first_name} ${guest.last_name}` : 'Un invité';
+        } else {
+          playerName = 'Anonyme';
+        }
+      }
+
+      return {
+        rank: entry.rank || index + 1,
+        playerName: playerName,
+        score: entry.total_score,
+        correctAnswers: entry.correct_answers,
+        totalAnswers: entry.total_answers,
+        isTop3: index < 3
+      };
+    }));
 
     res.json({
       success: true,
       data: {
         gameName: game.name,
         gameStatus: game.status,
-        totalParticipants: sanitizedLeaderboard.length,
-        leaderboard: sanitizedLeaderboard
+        totalParticipants: leaderboard.length,
+        leaderboard: leaderboard
       }
     });
   } catch (error) {
@@ -481,13 +773,60 @@ router.get('/:gameId/full-leaderboard', authenticateToken, async (req, res) => {
       });
     }
 
-    const { data: leaderboard, error } = await supabaseService
-      .from('game_leaderboard')
-      .select('*')
+    // Récupérer le classement depuis la table game_participations
+    const { data: participations, error } = await supabaseService
+      .from('game_participations')
+      .select(`
+        id,
+        total_score,
+        correct_answers,
+        total_answers,
+        completed_at,
+        player_name,
+        player_type,
+        family_id,
+        guest_id,
+        rank
+      `)
       .eq('game_id', gameId)
-      .order('rank', { ascending: true });
+      .eq('is_completed', true)
+      .order('total_score', { ascending: false })
+      .order('completed_at', { ascending: true });
 
     if (error) throw error;
+
+    // Enrichir les données avec les noms
+    const leaderboard = await Promise.all((participations || []).map(async (entry) => {
+      let playerName = entry.player_name;
+      
+      if (!playerName) {
+        if (entry.family_id) {
+          const { data: family } = await supabaseService
+            .from('families')
+            .select('name')
+            .eq('id', entry.family_id)
+            .single();
+          playerName = family?.name || 'Une famille';
+        } else if (entry.guest_id) {
+          const { data: guest } = await supabaseService
+            .from('guests')
+            .select('first_name, last_name')
+            .eq('id', entry.guest_id)
+            .single();
+          playerName = guest ? `${guest.first_name} ${guest.last_name}` : 'Un invité';
+        } else {
+          playerName = 'Anonyme';
+        }
+      }
+
+      return {
+        ...entry,
+        player_display_name: playerName,
+        total_score: entry.total_score,
+        correct_answers: entry.correct_answers,
+        total_answers: entry.total_answers
+      };
+    }));
 
     res.json({
       success: true,

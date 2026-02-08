@@ -14,6 +14,11 @@ const storyEventsDb = {
       throw new Error(`Error creating story event: ${error.message}`);
     }
 
+    // 🔄 Mapper media_type 'photo' -> 'image' pour compatibilité frontend
+    if (data && data.media_type === 'photo') {
+      data.media_type = 'image';
+    }
+
     return data;
   },
 
@@ -33,6 +38,11 @@ const storyEventsDb = {
       throw new Error(`Error finding story event: ${error.message}`);
     }
 
+    // 🔄 Mapper media_type 'photo' -> 'image' pour compatibilité frontend
+    if (data && data.media_type === 'photo') {
+      data.media_type = 'image';
+    }
+
     return data;
   },
 
@@ -50,7 +60,15 @@ const storyEventsDb = {
       throw new Error(`Error finding story events: ${error.message}`);
     }
 
-    return data || [];
+    // 🔄 Mapper media_type 'photo' -> 'image' pour compatibilité frontend
+    const mappedData = (data || []).map(item => {
+      if (item.media_type === 'photo') {
+        item.media_type = 'image';
+      }
+      return item;
+    });
+
+    return mappedData;
   },
 
   // Update story event
@@ -64,6 +82,11 @@ const storyEventsDb = {
 
     if (error) {
       throw new Error(`Error updating story event: ${error.message}`);
+    }
+
+    // 🔄 Mapper media_type 'photo' -> 'image' pour compatibilité frontend
+    if (data && data.media_type === 'photo') {
+      data.media_type = 'image';
     }
 
     return data;

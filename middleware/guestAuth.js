@@ -10,6 +10,9 @@ const authenticateGuest = async (req, res, next) => {
     const qrCode = req.query.qr || req.body.qrCode;
     const gameId = req.params.gameId || req.body.gameId;
 
+    console.log('[GuestAuth] Token:', accessToken ? accessToken.substring(0, 20) + '...' : 'none');
+    console.log('[GuestAuth] GameId:', gameId);
+
     if (!accessToken && !qrCode) {
       return res.status(401).json({
         success: false,
@@ -18,50 +21,142 @@ const authenticateGuest = async (req, res, next) => {
     }
 
     let guestData = null;
-    let accessType = null; // 'family' ou 'individual'
+    let accessType = null;
+    const { supabaseService } = require('../config/supabase');
 
     // Vérifier si c'est un token d'accès
     if (accessToken) {
-      const { supabaseService } = require('../config/supabase');
-      
-      // Chercher dans game_family_access avec infos du jeu
-      const { data: familyAccess, error: familyError } = await supabaseService
-        .from('game_family_access')
-        .select(`
-          *,
-          game:games(event_id)
-        `)
+      // 1. Chercher dans game_guest_access
+      const { data: guestAccess } = await supabaseService
+        .from('game_guest_access')
+        .select(`*, game:games(event_id)`)
         .eq('access_token', accessToken)
         .single();
 
-      if (familyAccess) {
+      if (guestAccess) {
+        console.log('[GuestAuth] Token trouvé dans game_guest_access');
         guestData = {
-          ...familyAccess,
-          event_id: familyAccess.game?.event_id  // ← Important pour la vérification IDOR
+          ...guestAccess,
+          event_id: guestAccess.game?.event_id
         };
-        accessType = 'family';
-      } else {
-        // Chercher dans game_guest_access avec infos du jeu
-        const { data: guestAccess, error: guestError } = await supabaseService
-          .from('game_guest_access')
-          .select(`
-            *,
-            game:games(event_id)
-          `)
+        accessType = guestAccess.is_public ? 'public' : 'individual';
+      } 
+      // 2. Chercher dans game_family_access
+      else {
+        const { data: familyAccess } = await supabaseService
+          .from('game_family_access')
+          .select(`*, game:games(event_id)`)
           .eq('access_token', accessToken)
           .single();
 
-        if (guestAccess) {
+        if (familyAccess) {
+          console.log('[GuestAuth] Token trouvé dans game_family_access');
           guestData = {
-            ...guestAccess,
-            event_id: guestAccess.game?.event_id  // ← Important pour la vérification IDOR
+            ...familyAccess,
+            event_id: familyAccess.game?.event_id
           };
-          accessType = 'individual';
+          accessType = 'family';
+        }
+        // 3. Token ancien format GAME-xxx ou token public non enregistré
+        else if (gameId) {
+          console.log('[GuestAuth] Token non trouvé, vérification dans les settings du jeu...');
+          
+          const { data: gameData } = await supabaseService
+            .from('games')
+            .select('id, event_id, settings')
+            .eq('id', gameId)
+            .single();
+          
+          if (gameData) {
+            // Vérifier si c'est un ancien token GAME-xxx
+            const settingsToken = gameData.settings?.accessCode;
+            
+            if (settingsToken === accessToken) {
+              console.log('[GuestAuth] Token trouvé dans les settings du jeu (ancien format)');
+              
+              // Créer un accès public pour ce token
+              const { data: newAccess, error: createError } = await supabaseService
+                .from('game_guest_access')
+                .insert([{
+                  game_id: gameId,
+                  guest_id: null,
+                  access_token: accessToken,
+                  is_public: true,
+                  qr_code: `QR-OLD-${Date.now()}`
+                }])
+                .select()
+                .single();
+              
+              if (newAccess) {
+                guestData = {
+                  ...newAccess,
+                  event_id: gameData.event_id,
+                  game: { event_id: gameData.event_id }
+                };
+                accessType = 'public';
+                console.log('[GuestAuth] Accès créé automatiquement pour l\'ancien token');
+              } else if (createError && createError.code === '23505') {
+                // Token déjà existe (contrainte d'unicité), on le récupère
+                const { data: existingAccess } = await supabaseService
+                  .from('game_guest_access')
+                  .select(`*, game:games(event_id)`)
+                  .eq('access_token', accessToken)
+                  .single();
+                  
+                if (existingAccess) {
+                  guestData = {
+                    ...existingAccess,
+                    event_id: existingAccess.game?.event_id
+                  };
+                  accessType = 'public';
+                }
+              }
+            } else {
+              // Token inconnu mais format valide, créer un accès public temporaire
+              console.log('[GuestAuth] Token inconnu, création accès temporaire...');
+              
+              const { data: tempAccess, error: tempError } = await supabaseService
+                .from('game_guest_access')
+                .insert([{
+                  game_id: gameId,
+                  guest_id: null,
+                  access_token: accessToken,
+                  is_public: true,
+                  qr_code: `QR-TEMP-${Date.now()}`
+                }])
+                .select()
+                .single();
+                
+              if (tempAccess) {
+                guestData = {
+                  ...tempAccess,
+                  event_id: gameData.event_id,
+                  game: { event_id: gameData.event_id }
+                };
+                accessType = 'public';
+              } else if (tempError && tempError.code === '23505') {
+                // Déjà existe
+                const { data: existingAccess } = await supabaseService
+                  .from('game_guest_access')
+                  .select(`*, game:games(event_id)`)
+                  .eq('access_token', accessToken)
+                  .single();
+                  
+                if (existingAccess) {
+                  guestData = {
+                    ...existingAccess,
+                    event_id: existingAccess.game?.event_id
+                  };
+                  accessType = 'public';
+                }
+              }
+            }
+          }
         }
       }
     }
 
-    // Sinon, vérifier le QR code
+    // Vérifier le QR code si pas de token
     if (!guestData && qrCode) {
       const qrData = await qrCodes.findByCode(qrCode);
       
@@ -72,8 +167,6 @@ const authenticateGuest = async (req, res, next) => {
         });
       }
 
-      // Vérifier si le QR code est lié à une famille ou un invité
-      // 🛡️ SECURITY: Include event_id for later verification
       if (qrData.family_id) {
         const family = await families.findById(qrData.family_id);
         if (family) {
@@ -81,7 +174,7 @@ const authenticateGuest = async (req, res, next) => {
             family_id: family.id,
             qr_code: qrCode,
             game_id: gameId,
-            event_id: qrData.event_id  // ← Important pour la vérification IDOR
+            event_id: qrData.event_id
           };
           accessType = 'family';
         }
@@ -92,7 +185,7 @@ const authenticateGuest = async (req, res, next) => {
             guest_id: guest.id,
             qr_code: qrCode,
             game_id: gameId,
-            event_id: qrData.event_id  // ← Important pour la vérification IDOR
+            event_id: qrData.event_id
           };
           accessType = 'individual';
         }
@@ -100,11 +193,14 @@ const authenticateGuest = async (req, res, next) => {
     }
 
     if (!guestData) {
+      console.log('[GuestAuth] ❌ Aucune donnée invité trouvée');
       return res.status(403).json({
         success: false,
         message: 'Invalid access token or QR code'
       });
     }
+
+    console.log('[GuestAuth] ✅ Accès trouvé, type:', accessType);
 
     // Vérifier que le jeu existe et est actif
     if (gameId) {
@@ -124,7 +220,6 @@ const authenticateGuest = async (req, res, next) => {
       }
 
       // Vérifier si l'invité a déjà joué
-      const { supabaseService } = require('../config/supabase');
       let hasPlayed = false;
 
       if (accessType === 'family' && guestData.family_id) {
@@ -145,6 +240,16 @@ const authenticateGuest = async (req, res, next) => {
           .eq('is_completed', true)
           .single();
         hasPlayed = !!participation;
+      } else {
+        // Pour l'accès public, vérifier par access_token
+        const { data: participation } = await supabaseService
+          .from('game_participations')
+          .select('*')
+          .eq('game_id', gameId)
+          .eq('access_token', accessToken)
+          .eq('is_completed', true)
+          .single();
+        hasPlayed = !!participation;
       }
 
       if (hasPlayed) {
@@ -162,9 +267,10 @@ const authenticateGuest = async (req, res, next) => {
       isGuest: true
     };
 
+    console.log('[GuestAuth] ✅ Authentification réussie');
     next();
   } catch (error) {
-    console.error('Guest authentication error:', error);
+    console.error('[GuestAuth] ❌ Erreur:', error);
     return res.status(500).json({
       success: false,
       message: 'Internal server error during guest authentication'
@@ -177,7 +283,6 @@ const generateGameAccessToken = async (gameId, familyId, guestId, qrCode) => {
   try {
     const { supabaseService } = require('../config/supabase');
     
-    // Générer un token unique
     const crypto = require('crypto');
     const accessToken = crypto.randomBytes(32).toString('base64url');
 
@@ -218,22 +323,19 @@ const generateGameAccessToken = async (gameId, familyId, guestId, qrCode) => {
   }
 };
 
-// Middleware optionnel - vérifie si l'invité est authentifié mais ne bloque pas
+// Middleware optionnel
 const optionalGuestAuth = async (req, res, next) => {
   try {
     const accessToken = req.query.token || req.headers['x-access-token'];
     const qrCode = req.query.qr;
 
     if (!accessToken && !qrCode) {
-      // Pas d'authentification, mais on continue
       req.guest = null;
       return next();
     }
 
-    // Sinon, utiliser le middleware complet
     return authenticateGuest(req, res, next);
   } catch (error) {
-    // En cas d'erreur, continuer sans auth
     req.guest = null;
     next();
   }

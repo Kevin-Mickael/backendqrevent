@@ -313,35 +313,61 @@ const refreshAccessToken = async (req, res) => {
     const sessionUtils = require('../utils/session');
     const { token: newAccessToken, cookieOptions } = await sessionUtils.generateSecureSessionCookie(decoded.userId);
 
-    // Generate new refresh token to prevent reuse (token rotation)
-    const newRefreshToken = await generateRefreshToken(decoded.userId);
+    // 🛡️ SECURITY FIX: Prevent race condition with simple lock mechanism
+    const lockKey = `refresh_lock:${decoded.userId}`;
+    
+    // Check if refresh is already in progress using memory
+    if (memoryFallback.has(lockKey)) {
+      return res.status(429).json({
+        success: false,
+        message: 'Token refresh already in progress, please wait'
+      });
+    }
+    
+    // Set lock
+    memoryFallback.set(lockKey, { locked: true, expires: Date.now() + 5000 });
+    
+    try {
+      // Revoke old refresh token FIRST (safer order)
+      await revokeRefreshToken(refreshToken);
+      
+      // Generate new refresh token
+      const newRefreshToken = await generateRefreshToken(decoded.userId);
+      
+      // Clear lock
+      memoryFallback.delete(lockKey);
+      
+      // Set new refresh token as cookie avec options sécurisées
+      const isProduction = config.nodeEnv === 'production';
+      res.cookie('refresh_token', newRefreshToken, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? 'strict' : 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        path: '/',
+        domain: isProduction ? process.env.COOKIE_DOMAIN || undefined : undefined
+      });
 
-    // Revoke old refresh token
-    await revokeRefreshToken(refreshToken);
+      logger.info('Access token refreshed via endpoint', {
+        userId: decoded.userId,
+        userAgent: req.get('User-Agent'),
+        ip: req.ip
+      });
 
-    // Set new refresh token as cookie avec options sécurisées
-    const isProduction = config.nodeEnv === 'production';
-    res.cookie('refresh_token', newRefreshToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'strict' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      path: '/',
-      domain: isProduction ? process.env.COOKIE_DOMAIN || undefined : undefined
-    });
-
-    logger.info('Access token refreshed via endpoint', {
-      userId: decoded.userId,
-      userAgent: req.get('User-Agent'),
-      ip: req.ip
-    });
-
-    res.json({
-      success: true,
-      accessToken: newAccessToken,
-      message: 'Token refreshed successfully'
-    });
+      res.json({
+        success: true,
+        accessToken: newAccessToken,
+        message: 'Token refreshed successfully'
+      });
+    } catch (innerError) {
+      // 🛡️ SECURITY: Always clean up lock on error
+      memoryFallback.delete(lockKey);
+      throw innerError;
+    }
+    
   } catch (error) {
+    // 🛡️ SECURITY: Always clean up lock on error
+    memoryFallback.delete(lockKey);
     logger.warn('Failed to refresh access token via endpoint', {
       error: error.message,
       userAgent: req.get('User-Agent'),

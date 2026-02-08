@@ -10,6 +10,7 @@ const { updateEventIfOwner, softDeleteEventIfOwner, getEventIfOwner, updateGuest
 const upload = require('../middleware/upload');
 const uploadVideo = require('../middleware/uploadVideo');
 const uploadAny = require('../middleware/uploadAny');
+const uploadMenu = require('../middleware/uploadMenu');
 const storageService = require('../services/storageService');
 const imageService = require('../services/imageService');
 const { addImageOptimizationJob } = require('../services/imageOptimizationQueue');
@@ -44,7 +45,7 @@ const eventValidationSchema = {
           lng: Joi.number()
         }).optional()
       }).optional(),
-      
+
       // Event schedule structure
       event_schedule: Joi.array().items(
         Joi.object().keys({
@@ -89,7 +90,7 @@ const eventValidationSchema = {
           lng: Joi.number()
         }).optional()
       }).optional(),
-      
+
       // New venue structure (all optional for updates)
       venue_type: Joi.string().valid('single', 'separate').optional(),
       ceremony_venue: Joi.object().keys({
@@ -215,11 +216,11 @@ const storyEventValidationSchema = {
     [Segments.BODY]: Joi.object().keys({
       event_id: Joi.string().required().uuid(),
       title: Joi.string().required().max(200),
-      event_date: Joi.date().optional(),
-      location: Joi.string().max(200).optional(),
-      description: Joi.string().max(2000).optional(),
-      media_type: Joi.string().valid('photo', 'video').optional(),
-      media_url: Joi.string().uri().optional(),
+      event_date: Joi.alternatives().try(Joi.date(), Joi.string().isoDate().allow('')).optional(),
+      location: Joi.string().max(200).optional().allow(''),
+      description: Joi.string().max(2000).optional().allow(''),
+      media_type: Joi.string().valid('image', 'video').optional(),
+      media_url: Joi.string().uri().optional().allow(''),
       sort_order: Joi.number().integer().optional()
     })
   }),
@@ -230,11 +231,11 @@ const storyEventValidationSchema = {
     }),
     [Segments.BODY]: Joi.object().keys({
       title: Joi.string().max(200).optional(),
-      event_date: Joi.date().optional(),
-      location: Joi.string().max(200).optional(),
-      description: Joi.string().max(2000).optional(),
-      media_type: Joi.string().valid('photo', 'video').optional(),
-      media_url: Joi.string().uri().optional(),
+      event_date: Joi.alternatives().try(Joi.date(), Joi.string().isoDate().allow('')).optional(),
+      location: Joi.string().max(200).optional().allow(''),
+      description: Joi.string().max(2000).optional().allow(''),
+      media_type: Joi.string().valid('image', 'video').optional(),
+      media_url: Joi.string().uri().optional().allow(''),
       sort_order: Joi.number().integer().optional()
     })
   })
@@ -2022,6 +2023,25 @@ router.get('/upload/health', authenticateToken, async (req, res) => {
 
 // ==================== STORY EVENTS ROUTES ====================
 
+// GET /api/events/:eventId/story-events/public - Get all story events for an event (Public, no auth)
+router.get('/events/:eventId/story-events/public', async (req, res) => {
+  try {
+    const storyEventsList = await storyEvents.findByEvent(req.params.eventId);
+
+    res.json({
+      success: true,
+      data: storyEventsList,
+      count: storyEventsList.length
+    });
+  } catch (error) {
+    logger.error('Error fetching public story events:', { error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching story events'
+    });
+  }
+});
+
 // GET /api/events/:eventId/story-events - Get all story events for an event
 router.get('/events/:eventId/story-events', authenticateToken, async (req, res) => {
   try {
@@ -2080,9 +2100,13 @@ router.post('/events/:eventId/story-events', authenticateToken, storyEventValida
       });
     }
 
+    // 🔄 Mapper media_type 'image' -> 'photo' pour compatibilité base de données
+    const mediaType = req.body.media_type === 'image' ? 'photo' : req.body.media_type;
+
     const storyEventData = {
       ...req.body,
       event_id: req.params.eventId,
+      media_type: mediaType,
       is_active: true
     };
 
@@ -2141,7 +2165,13 @@ router.put('/events/:eventId/story-events/:storyEventId', authenticateToken, sto
       });
     }
 
-    const updatedStoryEvent = await storyEvents.update(req.params.storyEventId, req.body);
+    // 🔄 Mapper media_type 'image' -> 'photo' pour compatibilité base de données
+    const updateData = { ...req.body };
+    if (updateData.media_type === 'image') {
+      updateData.media_type = 'photo';
+    }
+
+    const updatedStoryEvent = await storyEvents.update(req.params.storyEventId, updateData);
 
     res.json({
       success: true,
@@ -2401,29 +2431,41 @@ router.post('/events/:eventId/games/:gameId/qr-code', authenticateToken, async (
       });
     }
 
-    // Generate a secure game access code
-    const gameCode = `GAME-${uuidv4()}`;
+    // Generate a secure game access token
+    const crypto = require('crypto');
+    const accessToken = crypto.randomBytes(32).toString('base64url');
 
-    // Store the code in game settings for validation
-    const updatedSettings = {
-      ...existingGame.settings,
-      accessCode: gameCode,
-      qrCodeGeneratedAt: new Date().toISOString()
-    };
+    // Store the token in game_guest_access table for public access
+    // Using a special guest_id NULL for public QR access
+    // Note: qr_code is NULL because we're using access_token for public access
+    const { data: accessData, error: accessError } = await supabaseService
+      .from('game_guest_access')
+      .insert([{
+        game_id: req.params.gameId,
+        guest_id: null, // Public access
+        access_token: accessToken,
+        is_public: true
+        // qr_code is omitted - not needed for public access
+      }])
+      .select()
+      .single();
 
-    await games.update(req.params.gameId, { settings: updatedSettings });
+    if (accessError) {
+      logger.error('Error creating game access:', { error: accessError.message });
+      throw accessError;
+    }
 
-    // Generate URLs
-    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const gameUrl = `${baseUrl}/play/${req.params.gameId}?token=${gameCode}`;
-    const qrCodeUrl = `${baseUrl}/api/qr/generate?data=${encodeURIComponent(gameUrl)}`;
+    // Generate URLs - always use frontend URL, not backend
+    const config = require('../config/config');
+    const baseUrl = config.frontendUrl || 'http://localhost:3000';
+    const gameUrl = `${baseUrl}/play/${req.params.gameId}?token=${encodeURIComponent(accessToken)}`;
 
     res.json({
       success: true,
       message: 'QR code generated successfully',
       data: {
-        qrCode: gameCode,
-        qrCodeUrl: qrCodeUrl,
+        qrCode: accessToken,
+        qrCodeUrl: gameUrl, // Direct URL for QR code
         gameUrl: gameUrl
       }
     });
@@ -4465,7 +4507,10 @@ router.get('/events/:eventId/menu-settings', authenticateToken, async (req, res)
       invitation: true,
       table: false, // Only active if invitation service is enabled
       game: true,
-      avis: true
+      avis: true,
+      menu_type: 'manual',
+      menu_file_url: null,
+      menu_items: []
     };
 
     const menuSettings = event.menu_settings || defaultMenuSettings;
@@ -4491,7 +4536,10 @@ router.put('/events/:eventId/menu-settings', authenticateToken, celebrate({
     invitation: Joi.boolean().optional(),
     table: Joi.boolean().optional(),
     game: Joi.boolean().optional(),
-    avis: Joi.boolean().optional()
+    avis: Joi.boolean().optional(),
+    menu_type: Joi.string().valid('manual', 'file').optional(),
+    menu_file_url: Joi.string().uri().allow(null).optional(),
+    menu_items: Joi.array().items(Joi.object()).optional()
   }).min(1)
 }), async (req, res) => {
   try {
@@ -4519,7 +4567,10 @@ router.put('/events/:eventId/menu-settings', authenticateToken, celebrate({
       invitation: true,
       table: false,
       game: true,
-      avis: true
+      avis: true,
+      menu_type: 'manual',
+      menu_file_url: null,
+      menu_items: []
     };
 
     const newSettings = { ...currentSettings, ...req.body };
@@ -4553,6 +4604,201 @@ router.put('/events/:eventId/menu-settings', authenticateToken, celebrate({
     res.status(500).json({
       success: false,
       message: 'Server error while updating menu settings'
+    });
+  }
+});
+
+// POST /api/events/:eventId/upload-menu - Upload a menu file (PDF or Image)
+router.post('/events/:eventId/upload-menu', authenticateToken, uploadMenu.single('menu_file'), async (req, res) => {
+  try {
+    const eventId = req.params.eventId;
+
+    // Verify event ownership
+    const event = await events.findById(eventId);
+    if (!event || event.organizer_id !== req.user.id) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found or you do not have permission to access it'
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file uploaded'
+      });
+    }
+
+    // Upload to R2
+    const folder = buildSecurePath('events', eventId, 'menus');
+    const fileUrl = await storageService.uploadFile(req.file, folder);
+
+    // Update menu settings with the new file URL
+    const currentSettings = event.menu_settings || {};
+    const newSettings = {
+      ...currentSettings,
+      menu_file_url: fileUrl,
+      menu_type: 'file' // Automatically switch to file mode on upload
+    };
+
+    await updateEventIfOwner(eventId, req.user.id, {
+      menu_settings: newSettings
+    });
+
+    res.json({
+      success: true,
+      message: 'Menu file uploaded successfully',
+      data: {
+        fileUrl,
+        settings: newSettings
+      }
+    });
+
+  } catch (error) {
+    logger.error('Error uploading menu file:', { error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Server error while uploading menu file'
+    });
+  }
+});
+
+// GET /api/events/:eventId/programme-settings - Get programme settings for an event
+router.get('/events/:eventId/programme-settings', authenticateToken, async (req, res) => {
+  try {
+    const event = await events.findById(req.params.eventId);
+    if (!event || event.organizer_id !== req.user.id) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found'
+      });
+    }
+
+    const settings = event.programme_settings || {
+      programme_type: 'manual',
+      programme_file_url: null,
+      programme_items: event.event_schedule || []
+    };
+
+    res.json({
+      success: true,
+      data: settings
+    });
+  } catch (error) {
+    logger.error('Error fetching programme settings:', { error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching programme settings'
+    });
+  }
+});
+
+// PUT /api/events/:eventId/programme-settings - Update programme settings for an event
+router.put('/events/:eventId/programme-settings', authenticateToken, celebrate({
+  [Segments.BODY]: Joi.object().keys({
+    programme_type: Joi.string().valid('manual', 'file').optional(),
+    programme_file_url: Joi.string().uri().allow(null).optional(),
+    programme_items: Joi.array().items(Joi.object()).optional()
+  }).min(1)
+}), async (req, res) => {
+  try {
+    const event = await events.findById(req.params.eventId);
+    if (!event || event.organizer_id !== req.user.id) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found'
+      });
+    }
+
+    const currentSettings = event.programme_settings || {
+      programme_type: 'manual',
+      programme_file_url: null,
+      programme_items: event.event_schedule || []
+    };
+
+    const newSettings = { ...currentSettings, ...req.body };
+
+    const updateData = {
+      programme_settings: newSettings
+    };
+
+    // Also sync programme_items with event_schedule for backward compatibility
+    if (req.body.programme_items) {
+      updateData.event_schedule = req.body.programme_items;
+    }
+
+    const updatedEvent = await updateEventIfOwner(req.params.eventId, req.user.id, updateData);
+
+    res.json({
+      success: true,
+      message: 'Programme settings updated successfully',
+      data: updatedEvent.programme_settings
+    });
+  } catch (error) {
+    logger.error('Error updating programme settings:', { error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Server error while updating programme settings'
+    });
+  }
+});
+
+// POST /api/events/:eventId/upload-programme - Upload a programme file (PDF or Image)
+router.post('/events/:eventId/upload-programme', authenticateToken, uploadMenu.single('programme_file'), async (req, res) => {
+  try {
+    const eventId = req.params.eventId;
+    const event = await events.findById(eventId);
+    if (!event || event.organizer_id !== req.user.id) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found'
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file uploaded'
+      });
+    }
+
+    // Upload to R2
+    const storageService = require('../utils/storageService');
+    const { buildSecurePath } = require('../utils/pathBuilder');
+    const folder = buildSecurePath('events', eventId, 'programmes');
+    const fileUrl = await storageService.uploadFile(req.file, folder);
+
+    // Update programme settings
+    const currentSettings = event.programme_settings || {
+      programme_type: 'manual',
+      programme_file_url: null,
+      programme_items: event.event_schedule || []
+    };
+
+    const newSettings = {
+      ...currentSettings,
+      programme_file_url: fileUrl,
+      programme_type: 'file'
+    };
+
+    await updateEventIfOwner(eventId, req.user.id, {
+      programme_settings: newSettings
+    });
+
+    res.json({
+      success: true,
+      message: 'Programme file uploaded successfully',
+      data: {
+        fileUrl,
+        settings: newSettings
+      }
+    });
+
+  } catch (error) {
+    logger.error('Error uploading programme file:', { error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Server error while uploading programme file'
     });
   }
 });

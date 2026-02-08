@@ -306,6 +306,14 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/gallery', galleryRoutes);
 app.use('/health', healthRoutes);
 
+// 🎮 Redirect /play/* routes to frontend (for QR codes that might point to backend)
+app.get('/play/:gameId', (req, res) => {
+  const config = require('./config/config');
+  const frontendUrl = config.frontendUrl || 'http://localhost:3000';
+  const redirectUrl = `${frontendUrl}/play/${req.params.gameId}${req.url.includes('?') ? '?' + req.url.split('?')[1] : ''}`;
+  res.redirect(redirectUrl);
+});
+
 // 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({
