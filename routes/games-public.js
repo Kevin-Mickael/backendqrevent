@@ -384,21 +384,43 @@ router.post('/public/:gameId/play', authenticateGuest, playGameSchema, async (re
       console.error('[IP Record] Error:', ipRecordError.message);
     }
 
-    // Récupérer le classement mis à jour
-    console.log('[PlayGame] Fetching leaderboard for game:', gameId);
-    const { data: leaderboard, error: leaderboardError } = await supabaseService
-      .from('game_leaderboard')
-      .select('*')
+    // 🔧 CORRECTION: Calcul direct du rang depuis game_participations
+    console.log('[PlayGame] Calculating player rank for game:', gameId);
+    
+    // Recalculer et mettre à jour le rang de ce joueur
+    const { data: allParticipations, error: rankError } = await supabaseService
+      .from('game_participations')
+      .select('id, total_score, completed_at')
       .eq('game_id', gameId)
-      .order('rank', { ascending: true });
+      .eq('is_completed', true)
+      .order('total_score', { ascending: false })
+      .order('completed_at', { ascending: true });
 
-    if (leaderboardError) {
-      console.error('[PlayGame] ❌ Error fetching leaderboard:', leaderboardError);
+    let playerRank = null;
+    let totalParticipants = 0;
+
+    if (rankError) {
+      console.error('[PlayGame] ❌ Error calculating rank:', rankError);
     } else {
-      console.log('[PlayGame] ✅ Leaderboard fetched:', leaderboard?.length || 0, 'entries');
+      totalParticipants = allParticipations.length;
+      
+      // Calculer le rang du joueur actuel
+      const playerIndex = allParticipations.findIndex(p => p.id === participation.id);
+      playerRank = playerIndex >= 0 ? playerIndex + 1 : null;
+      
+      // Mettre à jour le rang dans la base de données pour tous les participants
+      for (let i = 0; i < allParticipations.length; i++) {
+        const currentParticipation = allParticipations[i];
+        const currentRank = i + 1;
+        
+        await supabaseService
+          .from('game_participations')
+          .update({ rank: currentRank })
+          .eq('id', currentParticipation.id);
+      }
+      
+      console.log(`[PlayGame] ✅ Rank calculated: ${playerRank}/${totalParticipants}`);
     }
-
-    const playerRank = leaderboard?.find(p => p.participation_id === participation.id)?.rank;
 
     res.json({
       success: true,
@@ -408,7 +430,7 @@ router.post('/public/:gameId/play', authenticateGuest, playGameSchema, async (re
         correctAnswers,
         totalQuestions: game.total_questions,
         rank: playerRank,
-        totalParticipants: leaderboard?.length || 0
+        totalParticipants: totalParticipants
       }
     });
   } catch (error) {
@@ -553,7 +575,7 @@ router.get('/public/:gameId/leaderboard', optionalGuestAuth, async (req, res) =>
       });
     }
 
-    // Récupérer le classement depuis la table game_participations
+    // 🔧 CORRECTION: Récupérer le classement avec calcul des rangs corrects
     const { data: participations, error } = await supabaseService
       .from('game_participations')
       .select(`
@@ -571,11 +593,29 @@ router.get('/public/:gameId/leaderboard', optionalGuestAuth, async (req, res) =>
       .eq('game_id', gameId)
       .eq('is_completed', true)
       .order('total_score', { ascending: false })
-      .order('completed_at', { ascending: true })
-      .limit(50);
+      .order('completed_at', { ascending: true });
 
     if (error) {
       throw error;
+    }
+
+    // Recalculer les rangs si nécessaire (au cas où ils seraient manquants)
+    if (participations && participations.length > 0) {
+      const hasInvalidRanks = participations.some((p, index) => !p.rank || p.rank !== index + 1);
+      
+      if (hasInvalidRanks) {
+        console.log(`[Leaderboard] Recalculating ranks for game ${gameId}...`);
+        for (let i = 0; i < participations.length; i++) {
+          const newRank = i + 1;
+          await supabaseService
+            .from('game_participations')
+            .update({ rank: newRank })
+            .eq('id', participations[i].id);
+          
+          participations[i].rank = newRank;
+        }
+        console.log(`[Leaderboard] ✅ Updated ${participations.length} ranks`);
+      }
     }
 
     // Récupérer les noms des familles et invités si nécessaire
@@ -609,7 +649,7 @@ router.get('/public/:gameId/leaderboard', optionalGuestAuth, async (req, res) =>
         score: entry.total_score,
         correctAnswers: entry.correct_answers,
         totalAnswers: entry.total_answers,
-        isTop3: index < 3
+        isTop3: (entry.rank || index + 1) <= 3
       };
     }));
 

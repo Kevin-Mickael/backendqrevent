@@ -20,6 +20,7 @@ const { validateEventId } = require('../utils/pathSecurity');
 const logger = require('../utils/logger');
 const { redisService, imageProcessingQueue } = require('../services/redisService');
 const { supabaseService } = require('../config/supabase');
+const userCleanupOrchestrator = require('../services/userCleanupOrchestrator');
 
 const router = express.Router();
 
@@ -458,13 +459,41 @@ router.post('/events', authenticateToken, eventValidationSchema.create, async (r
       filteredData.description = null;
     }
 
-    // 🛡️ RÈGLE 4: Création directe sécurisée (simplifiée pour éviter timeouts)
+    // 🛡️ RÈGLE 4: Transformer les données pour la base de données
     const eventData = {
-      ...filteredData,
-      organizer_id: req.user.id, // Toujours utiliser l'ID du user authentifié
-      is_active: true
-      // 🛡️ RÈGLE 1: UUID v4 généré automatiquement par Supabase (gen_random_uuid())
+      // Champs de base
+      title: filteredData.title,
+      description: filteredData.description,
+      date: filteredData.date, // Date principale de l'événement
+      location: filteredData.location, // Localisation générale
+      organizer_id: req.user.id,
+      is_active: true,
+      settings: filteredData.settings || {
+        enableRSVP: true,
+        enableGames: false,
+        enablePhotoGallery: true,
+        enableGuestBook: true,
+        enableQRVerification: true
+      },
+      guest_count: filteredData.guest_count,
+      partner1_name: filteredData.partner1_name,
+      partner2_name: filteredData.partner2_name,
+      
+      // Champs optionnels pour les images
+      cover_image: filteredData.cover_image,
+      banner_image: filteredData.banner_image,
+      
+      // Stocker le programme d'événement en JSON
+      event_schedule: filteredData.event_schedule || []
     };
+
+    console.log('[API] Creating event with data:', {
+      title: eventData.title,
+      hasDescription: !!eventData.description,
+      date: eventData.date,
+      organizerId: eventData.organizer_id,
+      scheduleSteps: eventData.event_schedule?.length || 0
+    });
 
     const event = await events.create(eventData);
 
@@ -1349,25 +1378,61 @@ router.get('/invitations', authenticateToken, async (req, res) => {
       eventsList = result.events;
       pagination = result.pagination;
     } catch (optimizedError) {
-      // Fallback: utiliser la méthode standard si la vue n'existe pas
-      logger.info('Fallback to standard events query (mv_event_summary not available)');
-      const allEvents = await events.findByOrganizer(req.user.id);
-
-      // Pagination manuelle
-      const total = allEvents.length;
+      // Fallback: utiliser la méthode optimisée sans N+1
+      logger.info('Fallback to optimized events query (mv_event_summary not available)');
+      
+      // 🔥 FIX CRITIQUE: Récupérer tous les events avec stats en UNE SEULE requête
+      const { supabaseService } = require('../config/supabase');
+      
+      // Récupérer les events paginés
+      const { data: allEvents, error: eventsError, count } = await supabaseService
+        .from('events')
+        .select('*', { count: 'exact' })
+        .eq('organizer_id', req.user.id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .range((page - 1) * limit, page * limit - 1);
+      
+      if (eventsError) throw eventsError;
+      
+      eventsList = allEvents || [];
+      const total = count || 0;
       const totalPages = Math.ceil(total / limit);
-      eventsList = allEvents.slice((page - 1) * limit, page * limit);
       pagination = { page, limit, total, totalPages };
-
-      // Récupérer les stats pour chaque événement
-      for (let event of eventsList) {
-        const guestsList = await guests.findByEvent(event.id);
-        event.stats = {
-          totalGuests: guestsList.length,
-          confirmed: guestsList.filter(g => g.rsvp_status === 'accepted').length,
-          declined: guestsList.filter(g => g.rsvp_status === 'declined').length,
-          pending: guestsList.filter(g => g.rsvp_status === 'pending').length
-        };
+      
+      // 🔥 FIX CRITIQUE: Récupérer les stats de tous les guests en UNE SEULE requête
+      if (eventsList.length > 0) {
+        const eventIds = eventsList.map(e => e.id);
+        const { data: guestStats, error: statsError } = await supabaseService
+          .from('guests')
+          .select('event_id, rsvp_status')
+          .in('event_id', eventIds);
+        
+        if (!statsError && guestStats) {
+          // Agréger les stats par event
+          const statsByEvent = {};
+          eventIds.forEach(id => {
+            statsByEvent[id] = { totalGuests: 0, confirmed: 0, declined: 0, pending: 0 };
+          });
+          
+          guestStats.forEach(guest => {
+            if (statsByEvent[guest.event_id]) {
+              statsByEvent[guest.event_id].totalGuests++;
+              if (guest.rsvp_status === 'accepted') {
+                statsByEvent[guest.event_id].confirmed++;
+              } else if (guest.rsvp_status === 'declined') {
+                statsByEvent[guest.event_id].declined++;
+              } else {
+                statsByEvent[guest.event_id].pending++;
+              }
+            }
+          });
+          
+          // Attacher les stats aux events
+          eventsList.forEach(event => {
+            event.stats = statsByEvent[event.id] || { totalGuests: 0, confirmed: 0, declined: 0, pending: 0 };
+          });
+        }
       }
     }
 
@@ -4802,5 +4867,169 @@ router.post('/events/:eventId/upload-programme', authenticateToken, uploadMenu.s
     });
   }
 });
+
+// ================================================================
+// API INTERNE POUR LE NETTOYAGE AUTOMATIQUE R2
+// ================================================================
+
+/**
+ * Endpoint interne pour déclencher le nettoyage des fichiers R2 d'un utilisateur
+ * Utilisé par les triggers de base de données ou des webhooks
+ */
+router.post('/internal/cleanup-user-files', async (req, res) => {
+  try {
+    const { userId, trigger = 'manual', reason = 'User deletion' } = req.body;
+
+    // Validation
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'userId est requis'
+      });
+    }
+
+    // Validation UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'userId doit être un UUID valide'
+      });
+    }
+
+    console.log(`[API] Internal R2 cleanup request for user ${userId} (trigger: ${trigger})`);
+
+    // Déclencher le nettoyage orchestré
+    const result = await userCleanupOrchestrator.orchestrateUserDeletion(
+      userId,
+      reason,
+      {
+        triggerSource: 'api_internal',
+        originalTrigger: trigger,
+        requestedAt: Date.now(),
+        clientInfo: {
+          ip: req.ip,
+          userAgent: req.get('User-Agent')
+        }
+      }
+    );
+
+    // Réponse
+    res.status(result.success ? 200 : 500).json({
+      success: result.success,
+      message: result.summary?.message || (result.success ? 'Cleanup completed' : 'Cleanup failed'),
+      data: {
+        deletionId: result.deletionId,
+        filesDeleted: result.summary?.filesDeleted || 0,
+        duration: result.summary?.duration,
+        details: result.steps
+      }
+    });
+
+    console.log(`[API] Internal R2 cleanup ${result.success ? 'completed' : 'failed'} for user ${userId}`);
+
+  } catch (error) {
+    console.error('[API] Internal R2 cleanup error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors du nettoyage R2',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * Endpoint pour nettoyer seulement les fichiers temporaires d'un utilisateur
+ */
+router.post('/internal/cleanup-user-temp-files', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    console.log(`[API] Temp files cleanup request for user ${userId}`);
+
+    const result = await userCleanupOrchestrator.cleanupUserTempFiles(userId);
+
+    res.json({
+      success: result.success,
+      message: result.message,
+      filesDeleted: result.filesDeleted || 0
+    });
+
+  } catch (error) {
+    console.error('[API] Temp files cleanup error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors du nettoyage des fichiers temporaires'
+    });
+  }
+});
+
+/**
+ * Endpoint pour obtenir les statistiques de stockage d'un utilisateur
+ */
+router.get('/internal/user-storage-stats', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const stats = await userCleanupOrchestrator.getUserStorageStats(userId);
+
+    res.json(stats);
+
+  } catch (error) {
+    console.error('[API] Storage stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des statistiques'
+    });
+  }
+});
+
+/**
+ * Endpoint administrateur pour forcer le nettoyage d'un utilisateur
+ * (Nécessite des privilèges administrateur)
+ */
+router.post('/admin/force-user-cleanup', authenticateToken, authorizeRole(['admin']), async (req, res) => {
+  try {
+    const { userId, reason = 'Administrator forced cleanup' } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'userId est requis'
+      });
+    }
+
+    console.log(`[API] Admin forced cleanup for user ${userId} by ${req.user.email}`);
+
+    const result = await userCleanupOrchestrator.orchestrateUserDeletion(
+      userId,
+      reason,
+      {
+        triggerSource: 'admin_force',
+        adminUserId: req.user.id,
+        adminEmail: req.user.email,
+        requestedAt: Date.now()
+      }
+    );
+
+    res.json({
+      success: result.success,
+      message: result.summary?.message,
+      data: {
+        deletionId: result.deletionId,
+        filesDeleted: result.summary?.filesDeleted || 0,
+        duration: result.summary?.duration
+      }
+    });
+
+  } catch (error) {
+    console.error('[API] Admin forced cleanup error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors du nettoyage administrateur'
+    });
+  }
+});
+
 
 module.exports = router;

@@ -1,6 +1,7 @@
 const express = require('express');
 const { secretsManager } = require('../utils/secretsManager');
 const { dbHealthMonitor } = require('../utils/dbHealth');
+const { getCircuitBreakerHealth } = require('../utils/circuitBreaker');
 const logger = require('../utils/logger');
 
 const router = express.Router();
@@ -162,6 +163,38 @@ router.post('/generate-secret', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Secret generation failed'
+    });
+  }
+});
+
+/**
+ * 🔥 Circuit Breaker health check
+ * GET /health/circuit-breakers
+ */
+router.get('/circuit-breakers', async (req, res) => {
+  try {
+    const circuitBreakers = getCircuitBreakerHealth();
+    
+    // Vérifier si un circuit est ouvert
+    const hasOpenCircuit = circuitBreakers.some(cb => cb.state === 'OPEN');
+    
+    res.status(hasOpenCircuit ? 503 : 200).json({
+      status: hasOpenCircuit ? 'degraded' : 'healthy',
+      timestamp: new Date().toISOString(),
+      circuitBreakers,
+      summary: {
+        total: circuitBreakers.length,
+        closed: circuitBreakers.filter(cb => cb.state === 'CLOSED').length,
+        open: circuitBreakers.filter(cb => cb.state === 'OPEN').length,
+        halfOpen: circuitBreakers.filter(cb => cb.state === 'HALF_OPEN').length
+      }
+    });
+  } catch (error) {
+    logger.error('❌ Circuit breaker health check error:', error.message);
+    res.status(500).json({
+      status: 'error',
+      message: 'Circuit breaker health check failed',
+      timestamp: new Date().toISOString()
     });
   }
 });

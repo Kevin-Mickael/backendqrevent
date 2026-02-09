@@ -99,27 +99,31 @@ router.get('/dashboard/stats/:eventId?',
       let stats = {};
       
       if (eventId) {
-        // Stats pour un événement spécifique
-        const event = await events.findById(eventId);
-        const eventFamilies = await families.findByEventId(eventId);
-        const eventGuests = await guests.findByEventId(eventId);
+        // 🔥 FIX CRITIQUE: Requêtes parallèles pour réduire la latence
+        const [event, eventFamilies, eventGuests] = await Promise.all([
+          events.findById(eventId),
+          families.findByEventId(eventId),
+          guests.findByEventId(eventId)
+        ]);
         
         stats = {
-          event: event.title,
-          totalFamilies: eventFamilies.length,
-          totalGuests: eventGuests.length,
-          confirmedGuests: eventGuests.filter(g => g.status === 'confirmed').length,
-          pendingInvitations: eventGuests.filter(g => g.status === 'pending').length
+          event: event?.title || 'Unknown',
+          totalFamilies: eventFamilies?.length || 0,
+          totalGuests: eventGuests?.length || 0,
+          confirmedGuests: eventGuests?.filter(g => g.status === 'confirmed').length || 0,
+          pendingInvitations: eventGuests?.filter(g => g.status === 'pending').length || 0
         };
       } else {
-        // Stats générales
-        const userEvents = await events.findByUserId(req.user.id);
-        const allFamilies = await families.findByUserId(req.user.id);
+        // 🔥 FIX CRITIQUE: Requêtes parallèles pour réduire la latence
+        const [userEvents, allFamilies] = await Promise.all([
+          events.findByUserId(req.user.id),
+          families.findByUserId(req.user.id)
+        ]);
         
         stats = {
-          totalEvents: userEvents.length,
-          totalFamilies: allFamilies.length,
-          activeEvents: userEvents.filter(e => new Date(e.date) > new Date()).length
+          totalEvents: userEvents?.length || 0,
+          totalFamilies: allFamilies?.length || 0,
+          activeEvents: userEvents?.filter(e => new Date(e.date) > new Date()).length || 0
         };
       }
       

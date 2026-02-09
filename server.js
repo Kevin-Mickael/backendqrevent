@@ -9,7 +9,7 @@ const { dbHealthMonitor } = require('./utils/dbHealth');
 
 // Import routes
 const apiRoutes = require('./routes/api');
-const authRoutes = require('./routes/auth');
+const authRoutes = require('./routes/auth.supabase');
 const gamesPublicRoutes = require('./routes/games-public');
 const budgetRoutes = require('./routes/budget');
 const messageRoutes = require('./routes/messages');
@@ -295,7 +295,14 @@ app.post('/api/auth/refresh-token', require('./middleware/refreshToken').refresh
 
 // Apply token refresh middleware BEFORE protected routes
 // This allows automatic token refresh before authentication middleware rejects the request
-app.use(handleTokenRefresh);
+// ⚠️ SKIP for /api/auth/* routes - they use Supabase Auth, not legacy JWT
+app.use((req, res, next) => {
+  // Skip handleTokenRefresh for Supabase Auth routes
+  if (req.path.startsWith('/api/auth/')) {
+    return next();
+  }
+  handleTokenRefresh(req, res, next);
+});
 
 // Routes
 app.use('/api/auth', authRoutes);

@@ -252,16 +252,10 @@ const refreshSession = async (req, res, next) => {
 };
 
 module.exports = {
-    // New Supabase Auth exports
     authenticateSupabase,
     optionalAuth,
     authorizeRole,
     refreshSession,
     extractToken,
-    setAuthErrorHeaders,
-
-    // Backwards-compatible aliases (for existing routes using old naming)
-    authenticateToken: authenticateSupabase,
-    validateRequest: () => (req, res, next) => next(), // No-op for compatibility
+    setAuthErrorHeaders
 };
-

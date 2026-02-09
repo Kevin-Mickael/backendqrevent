@@ -2,29 +2,52 @@ const { supabaseService } = require('../../config/supabase');
 
 // Event database utilities
 const eventDb = {
-  // Create a new event with venue support
+  // Create a new event
   create: async (eventData) => {
     console.log('[events.create] Creating event with data:', {
       title: eventData.title,
       hasDescription: !!eventData.description,
-      venue_type: eventData.venue_type,
-      ceremony_date: eventData.ceremony_date,
-      reception_date: eventData.reception_date,
-      organizer_id: eventData.organizer_id
+      date: eventData.date,
+      hasLocation: !!eventData.location,
+      organizer_id: eventData.organizer_id,
+      scheduleSteps: eventData.event_schedule?.length || 0
     });
     
-    // Prepare venue data based on type
+    // Ensure required fields have default values
     const processedEventData = {
-      ...eventData,
-      // Ensure venue_type is set
-      venue_type: eventData.venue_type || 'single',
+      title: eventData.title,
+      description: eventData.description || null, // NULL est permis depuis migration
+      date: eventData.date,
+      location: eventData.location || null,
+      organizer_id: eventData.organizer_id,
+      is_active: eventData.is_active !== false, // Default true
+      settings: eventData.settings || {
+        enableRSVP: true,
+        enableGames: false,
+        enablePhotoGallery: true,
+        enableGuestBook: true,
+        enableQRVerification: true
+      }
     };
 
-    // For single venue, copy ceremony venue to reception if not provided
-    if (processedEventData.venue_type === 'single' && processedEventData.ceremony_venue) {
-      processedEventData.reception_venue = null; // Single venue doesn't need reception venue
-      processedEventData.reception_date = processedEventData.ceremony_date;
-      processedEventData.reception_time = processedEventData.ceremony_time;
+    // Ajouter les champs optionnels s'ils existent
+    if (eventData.guest_count !== undefined) {
+      processedEventData.guest_count = eventData.guest_count;
+    }
+    if (eventData.partner1_name) {
+      processedEventData.partner1_name = eventData.partner1_name;
+    }
+    if (eventData.partner2_name) {
+      processedEventData.partner2_name = eventData.partner2_name;
+    }
+    if (eventData.event_schedule) {
+      processedEventData.event_schedule = eventData.event_schedule;
+    }
+    if (eventData.cover_image) {
+      processedEventData.cover_image = eventData.cover_image;
+    }
+    if (eventData.banner_image) {
+      processedEventData.banner_image = eventData.banner_image;
     }
     
     const { data, error } = await supabaseService
@@ -42,6 +65,11 @@ const eventDb = {
       });
       throw new Error(`Error creating event: ${error.message} (code: ${error.code})`);
     }
+
+    console.log('[events.create] Event created successfully:', {
+      id: data.id,
+      title: data.title
+    });
 
     return data;
   },

@@ -3,7 +3,18 @@ const logger = require('../utils/logger');
 
 // Configuration Redis avec fallback en mémoire
 let redisClient = null;
-const memoryCache = new Map();
+
+// 🔥 FIX CRITIQUE: Memory cache avec limite de taille LRU
+const MAX_MEMORY_CACHE_SIZE = 1000; // Maximum 1000 entrées en mémoire
+const memoryCache = new Map(); // Utilise l'ordre d'insertion pour LRU
+
+// 🔥 FIX CRITIQUE: Stats pour monitoring
+const cacheStats = {
+  hits: 0,
+  misses: 0,
+  evictions: 0,
+  size: 0
+};
 
 try {
   redisClient = new redis({
@@ -53,6 +64,7 @@ class IntelligentCache {
       if (redisClient) {
         const value = await redisClient.get(key);
         if (value) {
+          cacheStats.hits++;
           return JSON.parse(value);
         }
       }
@@ -60,12 +72,21 @@ class IntelligentCache {
       // Fallback mémoire
       const memValue = memoryCache.get(key);
       if (memValue && memValue.expires > Date.now()) {
+        // 🔥 FIX CRITIQUE: Mettre à jour lastAccessed pour LRU
+        memValue.lastAccessed = Date.now();
+        cacheStats.hits++;
         return memValue.data;
       }
       
+      // Clé expirée ou non trouvée
+      if (memValue) {
+        memoryCache.delete(key); // Nettoyer si expirée
+      }
+      cacheStats.misses++;
       return null;
     } catch (error) {
       logger.warn('Cache get error:', error.message);
+      cacheStats.misses++;
       return null;
     }
   }
@@ -79,14 +100,31 @@ class IntelligentCache {
         await redisClient.setex(key, ttlSeconds, value);
       }
       
+      // 🔥 FIX CRITIQUE: Vérifier la taille avant d'ajouter (LRU eviction)
+      if (memoryCache.size >= MAX_MEMORY_CACHE_SIZE && !memoryCache.has(key)) {
+        // Éviction LRU: supprimer la première entrée (la plus ancienne)
+        const firstKey = memoryCache.keys().next().value;
+        memoryCache.delete(firstKey);
+        cacheStats.evictions++;
+        logger.debug('Memory cache LRU eviction', { evictedKey: firstKey, currentSize: memoryCache.size });
+      }
+      
+      // Supprimer d'abord si existe (pour mettre à jour l'ordre LRU)
+      memoryCache.delete(key);
+      
       // Sauver en mémoire (avec expiration)
       memoryCache.set(key, {
         data: data,
-        expires: Date.now() + (ttlSeconds * 1000)
+        expires: Date.now() + (ttlSeconds * 1000),
+        lastAccessed: Date.now()
       });
       
-      // Nettoyer les clés expirées en mémoire
-      this.cleanExpiredMemoryCache();
+      // Nettoyer les clés expirées en mémoire périodiquement (pas à chaque set)
+      if (Math.random() < 0.1) { // 10% de chance
+        this.cleanExpiredMemoryCache();
+      }
+      
+      cacheStats.size = memoryCache.size;
       
     } catch (error) {
       logger.warn('Cache set error:', error.message);
@@ -126,11 +164,29 @@ class IntelligentCache {
 
   static cleanExpiredMemoryCache() {
     const now = Date.now();
+    let cleaned = 0;
     for (const [key, value] of memoryCache.entries()) {
       if (value.expires <= now) {
         memoryCache.delete(key);
+        cleaned++;
       }
     }
+    if (cleaned > 0) {
+      logger.debug('Memory cache cleanup', { cleanedEntries: cleaned, remaining: memoryCache.size });
+    }
+    cacheStats.size = memoryCache.size;
+  }
+  
+  // 🔥 FIX CRITIQUE: Méthode pour obtenir les stats du cache
+  static getStats() {
+    const hitRate = cacheStats.hits + cacheStats.misses > 0 
+      ? (cacheStats.hits / (cacheStats.hits + cacheStats.misses) * 100).toFixed(2)
+      : 0;
+    return {
+      ...cacheStats,
+      hitRate: `${hitRate}%`,
+      maxSize: MAX_MEMORY_CACHE_SIZE
+    };
   }
 }
 

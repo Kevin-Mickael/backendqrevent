@@ -235,6 +235,77 @@ class StorageService {
     }
 
     /**
+     * Deletes multiple files from R2 efficiently
+     * @param {Array<string>} fileUrlsOrKeys - Array of URLs or keys to delete
+     * @returns {Promise<Object>} Result with success count and errors
+     */
+    async deleteMultipleFiles(fileUrlsOrKeys) {
+        if (!this.isConfigured()) {
+            return { success: false, deleted: 0, errors: ['R2 not configured'] };
+        }
+
+        if (!fileUrlsOrKeys || fileUrlsOrKeys.length === 0) {
+            return { success: true, deleted: 0, errors: [] };
+        }
+
+        // Convert URLs to keys
+        const keys = fileUrlsOrKeys.map(urlOrKey => {
+            if (urlOrKey.startsWith('http')) {
+                try {
+                    const urlObj = new URL(urlOrKey);
+                    return urlObj.pathname.substring(1); // Remove leading slash
+                } catch (e) {
+                    return urlOrKey;
+                }
+            }
+            return urlOrKey;
+        }).filter(key => key); // Remove empty keys
+
+        if (keys.length === 0) {
+            return { success: true, deleted: 0, errors: [] };
+        }
+
+        console.log(`[Storage] Deleting ${keys.length} files from R2`);
+
+        try {
+            const { DeleteObjectsCommand } = require('@aws-sdk/client-s3');
+            
+            const command = new DeleteObjectsCommand({
+                Bucket: this.bucket,
+                Delete: {
+                    Objects: keys.map(key => ({ Key: key })),
+                    Quiet: true // Return only errors
+                }
+            });
+
+            const response = await this.client.send(command);
+            
+            const errors = response.Errors || [];
+            const deleted = keys.length - errors.length;
+
+            console.log(`[Storage] Deleted ${deleted}/${keys.length} files successfully`);
+            
+            if (errors.length > 0) {
+                console.warn(`[Storage] ${errors.length} deletion errors:`, errors);
+            }
+
+            return {
+                success: errors.length === 0,
+                deleted,
+                errors: errors.map(err => `${err.Key}: ${err.Message}`)
+            };
+
+        } catch (error) {
+            console.error('[Storage] Batch deletion failed:', error);
+            return {
+                success: false,
+                deleted: 0,
+                errors: [error.message]
+            };
+        }
+    }
+
+    /**
      * Deletes a file from R2
      * @param {string} fileUrlOrKey - The full URL or the key of the file to delete
      * @returns {Promise<void>}

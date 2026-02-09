@@ -194,11 +194,13 @@ const login = async (req, res) => {
             });
         }
 
+        // Handle email not confirmed error
         if (error.message?.includes('Email not confirmed')) {
             return res.status(401).json({
                 success: false,
-                message: 'Please confirm your email before logging in',
-                code: 'EMAIL_NOT_CONFIRMED'
+                message: 'Please verify your email address before signing in. Check your inbox for a confirmation link.',
+                code: 'EMAIL_NOT_CONFIRMED',
+                email: req.body?.email
             });
         }
 
