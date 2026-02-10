@@ -79,12 +79,12 @@ router.post('/resend-confirmation', authLimiter, authValidation.email, authContr
 router.post('/refresh-token', generalLimiter, authController.refreshToken);
 
 // ============================================
-// Session check route
+// Session check route - with JWT fallback
 // ============================================
 router.get('/session', generalLimiter, refreshSession, async (req, res) => {
     try {
         // Try to extract and verify token
-        const { extractToken } = require('../middleware/auth');
+        const { extractToken, verifyLocalJWT, isSupabaseUnavailable } = require('../middleware/auth');
         const { supabaseService } = require('../config/supabase');
 
         const token = extractToken(req);
@@ -97,9 +97,32 @@ router.get('/session', generalLimiter, refreshSession, async (req, res) => {
             });
         }
 
-        const { data: { user }, error } = await supabaseService.auth.getUser(token);
+        let user = null;
+        let supabaseError = null;
 
-        if (error || !user) {
+        // ÉTAPE 1: Essayer Supabase Auth
+        try {
+            const { data: { user: sbUser }, error } = await supabaseService.auth.getUser(token);
+            if (!error && sbUser) {
+                user = sbUser;
+            } else if (error) {
+                supabaseError = error;
+            }
+        } catch (error) {
+            supabaseError = error;
+        }
+
+        // ÉTAPE 2: Fallback sur JWT local si Supabase est indisponible
+        if (!user && supabaseError && isSupabaseUnavailable(supabaseError)) {
+            console.warn('[Session] Supabase unavailable, checking local JWT fallback');
+            const localPayload = verifyLocalJWT(token);
+            if (localPayload && localPayload.sub) {
+                user = { id: localPayload.sub };
+                console.log('[Session] ✅ Authenticated via local JWT fallback');
+            }
+        }
+
+        if (!user) {
             return res.json({
                 success: true,
                 authenticated: false,
@@ -114,6 +137,7 @@ router.get('/session', generalLimiter, refreshSession, async (req, res) => {
             userId: user.id
         });
     } catch (error) {
+        console.error('[Session] Error checking session:', error);
         res.status(500).json({
             success: false,
             message: 'Server error'

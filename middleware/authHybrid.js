@@ -33,8 +33,7 @@ const extractToken = (req) => {
     if (req.cookies) {
         return req.cookies['sb-access-token'] ||
             req.cookies['access_token'] ||
-            req.cookies['supabase-auth-token'] ||
-            req.cookies['local_auth_token']; // 🔥 FALLBACK JWT token
+            req.cookies['supabase-auth-token'];
     }
 
     return null;

@@ -209,6 +209,13 @@ const verifyRefreshToken = async (token) => {
 const handleTokenRefresh = async (req, res, next) => {
   const refreshToken = req.cookies.refresh_token;
   const accessToken = req.cookies.session_token;
+  const supabaseToken = req.cookies['sb-access-token'];
+
+  // 🔧 CAS 0: Si un token Supabase est présent, skipper ce middleware (legacy JWT)
+  // Le système d'auth utilise maintenant Supabase Auth, pas les JWT legacy
+  if (supabaseToken) {
+    return next();
+  }
 
   // 🔧 CAS 1: Access token valide présent - ne rien faire, laisser authenticateToken gérer
   if (accessToken) {

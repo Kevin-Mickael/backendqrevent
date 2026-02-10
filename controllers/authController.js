@@ -1,10 +1,14 @@
 /**
- * Auth Controller - Supabase Auth Version
+ * Auth Controller - Supabase Auth Version with JWT Fallback
  * 
  * Handles authentication endpoints using Supabase Auth.
  * Maintains backwards compatibility with existing API responses.
+ * 
+ * 🔥 FALLBACK JWT: Génère aussi un token JWT local qui sert de fallback
+ * quand Supabase Auth est temporairement indisponible (quota atteint, etc.)
  */
 
+const jwt = require('jsonwebtoken');
 const supabaseAuthService = require('../services/supabaseAuthService');
 const { supabaseService } = require('../config/supabase');
 const config = require('../config/config');
@@ -146,6 +150,22 @@ const login = async (req, res) => {
 
         // Also set legacy cookie name for backwards compatibility
         res.cookie('session_token', result.session.access_token, getCookieOptions(result.session.expires_in * 1000));
+
+        // 🔥 FALLBACK JWT: Générer un token JWT local pour fallback quand Supabase est indisponible
+        const localJWTPayload = {
+            sub: result.user.auth_id || result.user.id,
+            email: result.user.email,
+            name: result.user.name,
+            role: result.user.role || 'organizer',
+            iat: Math.floor(Date.now() / 1000)
+        };
+        const localJWT = jwt.sign(localJWTPayload, config.jwtSecret, {
+            expiresIn: config.jwtExpire || '24h'
+        });
+        
+        // Stocker le JWT local dans un cookie séparé (utilisé en fallback)
+        res.cookie('local_auth_token', localJWT, getCookieOptions(24 * 60 * 60 * 1000));
+        logger.debug('Generated local JWT fallback token for user', { userId: result.user.id });
 
         // Log successful login
         await auditService.logLoginAttempt(email.toLowerCase(), clientIP, userAgent, true, null);
@@ -329,6 +349,7 @@ const logout = async (req, res) => {
         res.clearCookie('sb-refresh-token', clearCookieOptions);
         res.clearCookie('session_token', clearCookieOptions);
         res.clearCookie('refresh_token', clearCookieOptions);
+        res.clearCookie('local_auth_token', clearCookieOptions); // 🔥 Clear fallback JWT
 
         // Log logout
         await auditService.logEvent({

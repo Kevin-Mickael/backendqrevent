@@ -311,6 +311,7 @@ app.use('/api/games', gamesPublicRoutes);
 app.use('/api/budget', budgetRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/gallery', galleryRoutes);
+app.use('/api/drafts', require('./routes/drafts'));
 app.use('/health', healthRoutes);
 
 // 🎮 Redirect /play/* routes to frontend (for QR codes that might point to backend)

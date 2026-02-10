@@ -13,7 +13,7 @@ const eventDb = {
       scheduleSteps: eventData.event_schedule?.length || 0
     });
     
-    // Ensure required fields have default values
+    // Ensure required fields have default values and handle venue constraints
     const processedEventData = {
       title: eventData.title,
       description: eventData.description || null, // NULL est permis depuis migration
@@ -21,6 +21,30 @@ const eventDb = {
       location: eventData.location || null,
       organizer_id: eventData.organizer_id,
       is_active: eventData.is_active !== false, // Default true
+      
+      // Gestion des contraintes de venue - extraire du programme d'événement
+      venue_type: 'single', // Default à single venue
+      
+      // Date et heure de la cérémonie (requis)
+      ceremony_date: eventData.ceremony_date || eventData.date,
+      ceremony_time: eventData.ceremony_time || eventData.event_schedule?.[0]?.time || '14:00',
+      
+      // Date et heure de la réception
+      reception_date: eventData.reception_date || eventData.date,
+      reception_time: eventData.reception_time || eventData.event_schedule?.[1]?.time || '18:00',
+      
+      ceremony_venue: eventData.ceremony_venue || {
+        name: eventData.event_schedule?.[0]?.location || eventData.location?.address || 'Lieu à définir',
+        address: eventData.event_schedule?.[0]?.location || eventData.location?.address || 'Adresse à définir',
+        city: ''
+      },
+      reception_venue: eventData.reception_venue || {
+        name: eventData.event_schedule?.[1]?.location || eventData.event_schedule?.[0]?.location || 'Lieu de réception',
+        address: eventData.event_schedule?.[1]?.location || eventData.event_schedule?.[0]?.location || 'Adresse de réception',
+        city: ''
+      },
+      
+      // Settings par défaut
       settings: eventData.settings || {
         enableRSVP: true,
         enableGames: false,
