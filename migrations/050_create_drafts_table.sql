@@ -51,8 +51,13 @@ $$ LANGUAGE plpgsql;
 -- Commentaire sur la table
 COMMENT ON TABLE form_drafts IS 'Stocke les brouillons auto-sauvegardés des formulaires pour persistance des données utilisateur';
 
--- Log de création
-INSERT INTO audit_logs (user_id, action, resource_type, details, severity)
-VALUES (NULL, 'draft_system_created', 'system', 
-        jsonb_build_object('migration', '050_create_drafts_table', 'table', 'form_drafts'),
-        'info');
+-- Log de création (uniquement si la table audit_logs existe)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'audit_logs') THEN
+        INSERT INTO audit_logs (user_id, action, resource_type, details, severity)
+        VALUES (NULL, 'draft_system_created', 'system', 
+                jsonb_build_object('migration', '050_create_drafts_table', 'table', 'form_drafts'),
+                'info');
+    END IF;
+END $$;

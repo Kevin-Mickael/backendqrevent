@@ -30,7 +30,7 @@ const sanitizeForLog = (obj, maxLength = 500) => {
   }
 
   const sanitized = {};
-  
+
   for (const [key, value] of Object.entries(obj)) {
     // Masquer les champs sensibles
     if (SENSITIVE_FIELDS.some(field => key.toLowerCase().includes(field))) {
@@ -52,7 +52,7 @@ const sanitizeForLog = (obj, maxLength = 500) => {
       sanitized[key] = value;
     }
   }
-  
+
   return sanitized;
 };
 
@@ -63,7 +63,7 @@ const sanitizeForLog = (obj, maxLength = 500) => {
  */
 const sanitizeFilename = (filename) => {
   if (!filename || typeof filename !== 'string') return 'unknown';
-  
+
   // Enlever les caractères dangereux et les path traversal
   return filename
     .replace(/[<>"'|;&$\x00-\x1F]/g, '') // Caractères de contrôle et spéciaux
@@ -80,7 +80,7 @@ const sanitizeFilename = (filename) => {
  */
 const sanitizeString = (input, maxLength = 1000) => {
   if (!input || typeof input !== 'string') return '';
-  
+
   return input
     .replace(/[<>]/g, '') // XSS basique
     .trim()
@@ -98,12 +98,12 @@ const sanitizeString = (input, maxLength = 1000) => {
  */
 const sanitizeEventData = (data) => {
   const allowedFields = [
-    'title', 'description', 'guest_count', 'date', 'location', 
+    'title', 'description', 'guest_count', 'date', 'location',
     'cover_image', 'banner_image', 'settings', 'is_active'
   ];
-  
+
   const sanitized = {};
-  
+
   for (const field of allowedFields) {
     if (data[field] !== undefined) {
       switch (field) {
@@ -114,8 +114,8 @@ const sanitizeEventData = (data) => {
         case 'guest_count':
           // Valider que c'est un nombre entier entre 1 et 1000
           const guestCount = parseInt(data[field], 10);
-          sanitized[field] = !isNaN(guestCount) && guestCount >= 1 && guestCount <= 1000 
-            ? guestCount 
+          sanitized[field] = !isNaN(guestCount) && guestCount >= 1 && guestCount <= 1000
+            ? guestCount
             : null;
           break;
         case 'date':
@@ -124,8 +124,8 @@ const sanitizeEventData = (data) => {
           sanitized[field] = isNaN(dateObj.getTime()) ? null : data[field];
           break;
         case 'location':
-          sanitized[field] = typeof data[field] === 'object' 
-            ? sanitizeLocationData(data[field]) 
+          sanitized[field] = typeof data[field] === 'object'
+            ? sanitizeLocationData(data[field])
             : null;
           break;
         case 'settings':
@@ -141,7 +141,7 @@ const sanitizeEventData = (data) => {
       }
     }
   }
-  
+
   return sanitized;
 };
 
@@ -150,14 +150,14 @@ const sanitizeEventData = (data) => {
  */
 const sanitizeLocationData = (location) => {
   if (!location || typeof location !== 'object') return null;
-  
+
   return {
     address: sanitizeString(location.address, 500),
     coordinates: location.coordinates && typeof location.coordinates === 'object'
       ? {
-          lat: typeof location.coordinates.lat === 'number' ? location.coordinates.lat : null,
-          lng: typeof location.coordinates.lng === 'number' ? location.coordinates.lng : null
-        }
+        lat: typeof location.coordinates.lat === 'number' ? location.coordinates.lat : null,
+        lng: typeof location.coordinates.lng === 'number' ? location.coordinates.lng : null
+      }
       : null
   };
 };
@@ -167,19 +167,19 @@ const sanitizeLocationData = (location) => {
  */
 const sanitizeSettingsData = (settings) => {
   if (!settings || typeof settings !== 'object') return {};
-  
+
   const allowedSettings = [
-    'enableRSVP', 'enableGames', 'enablePhotoGallery', 
+    'enableRSVP', 'enableGames', 'enablePhotoGallery',
     'enableGuestBook', 'enableQRVerification'
   ];
-  
+
   const sanitized = {};
   for (const key of allowedSettings) {
     if (settings[key] !== undefined) {
       sanitized[key] = Boolean(settings[key]);
     }
   }
-  
+
   return sanitized;
 };
 
@@ -194,7 +194,7 @@ const sanitizeSettingsData = (settings) => {
  */
 const detectSQLInjection = (input) => {
   if (!input || typeof input !== 'string') return false;
-  
+
   const sqlPatterns = [
     /(\%27)|(\')|(\-\-)|(\%23)|(#)/i,
     /((\%3D)|(=))[^\n]*((\%27)|(\')|(\-\-)|(\%3B)|(;))/i,
@@ -206,7 +206,7 @@ const detectSQLInjection = (input) => {
     /DELETE\s+FROM/i,
     /DROP\s+TABLE/i
   ];
-  
+
   return sqlPatterns.some(pattern => pattern.test(input));
 };
 
@@ -217,7 +217,7 @@ const detectSQLInjection = (input) => {
  */
 const detectXSS = (input) => {
   if (!input || typeof input !== 'string') return false;
-  
+
   const xssPatterns = [
     /<script[^>]*>[\s\S]*?<\/script>/i,
     /javascript:/i,
@@ -228,7 +228,7 @@ const detectXSS = (input) => {
     /eval\s*\(/i,
     /expression\s*\(/i
   ];
-  
+
   return xssPatterns.some(pattern => pattern.test(input));
 };
 
@@ -236,9 +236,9 @@ const detectXSS = (input) => {
  * Middleware pour détecter les activités suspectes
  */
 const suspiciousActivityDetector = (req, res, next) => {
-  const suspiciousHeaders = req.headers['x-http-method-override'] || 
-                            req.headers['http-method-override'];
-  
+  const suspiciousHeaders = req.headers['x-http-method-override'] ||
+    req.headers['http-method-override'];
+
   if (suspiciousHeaders) {
     logger.warn('🚨 Suspicious header detected', {
       ip: req.ip,
@@ -246,7 +246,7 @@ const suspiciousActivityDetector = (req, res, next) => {
       path: req.path
     });
   }
-  
+
   // Vérifier les tentatives de path traversal
   if (req.path.includes('..') || req.path.includes('%2e%2e')) {
     logger.warn('🚨 Path traversal attempt detected', {
@@ -255,7 +255,7 @@ const suspiciousActivityDetector = (req, res, next) => {
     });
     return res.status(400).json({ success: false, message: 'Invalid request' });
   }
-  
+
   next();
 };
 

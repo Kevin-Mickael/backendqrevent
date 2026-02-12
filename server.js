@@ -408,6 +408,7 @@ const startServer = async () => {
       logger.info('Running database migrations on startup...');
       await executeMigration('021_add_guest_count_to_events.sql');
       await executeMigration('027_ensure_max_people_column.sql');
+      await executeMigration('050_create_drafts_table.sql');
       logger.info('Database migrations completed successfully');
     } catch (migrationError) {
       logger.warn('Migration check completed (may already be applied):', migrationError.message);

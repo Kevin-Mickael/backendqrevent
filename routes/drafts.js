@@ -90,10 +90,29 @@ router.post('/', authenticateToken, draftValidation.save, async (req, res) => {
     });
 
   } catch (error) {
-    logger.error('Erreur sauvegarde brouillon:', error);
+    logger.error('Erreur sauvegarde brouillon:', {
+      error: error.message,
+      code: error.code,
+      userId: req.user?.id,
+      formType,
+      formId
+    });
+    
+    // Message d'erreur plus spécifique selon le type d'erreur
+    let errorMessage = 'Erreur lors de la sauvegarde du brouillon';
+    if (error.code === '23503') {
+      errorMessage = 'Données de référence invalides';
+    } else if (error.code === '42P01') {
+      errorMessage = 'Table de brouillons non trouvée - Contactez l\'administrateur';
+    } else if (error.message?.includes('permission denied')) {
+      errorMessage = 'Permissions insuffisantes';
+    }
+    
     res.status(500).json({
       success: false,
-      message: 'Erreur lors de la sauvegarde du brouillon'
+      message: errorMessage,
+      code: error.code,
+      ...(process.env.NODE_ENV === 'development' && { details: error.message })
     });
   }
 });
