@@ -334,22 +334,42 @@ const logout = async (req, res) => {
     try {
         const accessToken = req.cookies?.['sb-access-token'] || req.cookies?.session_token;
 
-        // Sign out from Supabase
-        await supabaseAuthService.signOut(accessToken);
+        // Sign out from Supabase (best effort - don't fail if this errors)
+        try {
+            if (accessToken) {
+                await supabaseAuthService.signOut(accessToken);
+            }
+        } catch (supabaseError) {
+            logger.warn('Supabase signOut error (continuing with cookie cleanup):', supabaseError.message);
+        }
 
-        // Clear all auth cookies
+        // 🛡️ CRITICAL: Cookie options MUST match exactly those used when setting the cookies
+        // Otherwise clearCookie will not work properly
         const clearCookieOptions = {
             httpOnly: true,
             secure: isProduction,
             sameSite: isProduction ? 'strict' : 'lax',
-            path: '/'
+            path: '/',
+            domain: undefined // Don't set domain - let browser handle it
         };
 
-        res.clearCookie('sb-access-token', clearCookieOptions);
-        res.clearCookie('sb-refresh-token', clearCookieOptions);
-        res.clearCookie('session_token', clearCookieOptions);
-        res.clearCookie('refresh_token', clearCookieOptions);
-        res.clearCookie('local_auth_token', clearCookieOptions); // 🔥 Clear fallback JWT
+        // Clear ALL possible auth cookies
+        const cookiesToClear = [
+            'sb-access-token',
+            'sb-refresh-token',
+            'session_token',
+            'refresh_token',
+            'local_auth_token'
+        ];
+
+        cookiesToClear.forEach(cookieName => {
+            res.clearCookie(cookieName, clearCookieOptions);
+            // Also try clearing without httpOnly for safety (in case cookie was set incorrectly)
+            res.clearCookie(cookieName, {
+                ...clearCookieOptions,
+                httpOnly: false
+            });
+        });
 
         // Log logout
         await auditService.logEvent({
@@ -362,6 +382,16 @@ const logout = async (req, res) => {
             severity: auditService.SEVERITIES.INFO,
             success: true
         });
+
+        logger.info('User logged out successfully', {
+            userId: req.user?.id,
+            cookiesCleared: cookiesToClear.length
+        });
+
+        // 🔥 IMPORTANT: Set cache headers to prevent browser caching
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
 
         res.json({
             success: true,

@@ -15,6 +15,9 @@ const budgetRoutes = require('./routes/budget');
 const messageRoutes = require('./routes/messages');
 const galleryRoutes = require('./routes/gallery');
 const healthRoutes = require('./routes/health');
+const invitationDesignsRoutes = require('./routes/invitationDesigns');
+const invitationFamilyAssignmentsRoutes = require('./routes/invitationFamilyAssignments');
+const invitationsPublicRoutes = require('./routes/invitationsPublic');
 
 // Import middleware
 const { limiter, securityHeaders, additionalSecurityHeaders, preventParamPollution } = require('./middleware/security');
@@ -306,6 +309,9 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api', invitationsPublicRoutes); // Public invitation routes (NO AUTH required, must be first)
+app.use('/api', invitationDesignsRoutes); // Invitation designs routes (must be before apiRoutes)
+app.use('/api', invitationFamilyAssignmentsRoutes); // Invitation family assignments routes (must be before apiRoutes)
 app.use('/api', apiRoutes);
 app.use('/api/games', gamesPublicRoutes);
 app.use('/api/budget', budgetRoutes);

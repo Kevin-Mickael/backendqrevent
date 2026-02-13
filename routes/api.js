@@ -627,7 +627,13 @@ router.get('/events/:eventId/progress', authenticateToken, async (req, res) => {
       banner: !!event.banner_image,
 
       // Content
-      programme: Array.isArray(event.event_schedule) && event.event_schedule.length > 0,
+      // programme: Check programme_settings (file or manual items), NOT event_schedule (ceremony/reception)
+      // event_schedule = main event steps (Ceremony, Reception) - NOT the detailed program
+      // programme_items = detailed program created by the couple
+      programme: !!event.programme_settings && (
+        !!event.programme_settings.programme_file_url ||
+        (Array.isArray(event.programme_settings.programme_items) && event.programme_settings.programme_items.length > 0)
+      ),
       menu: !!event.menu_settings && Object.keys(event.menu_settings).length > 0,
       budget: (event.total_budget || 0) > 0,
 
@@ -4983,10 +4989,13 @@ router.get('/events/:eventId/programme-settings', authenticateToken, async (req,
       });
     }
 
+    // Ne PAS utiliser event_schedule comme fallback pour programme_items
+    // event_schedule = étapes principales (Cérémonie, Réception)
+    // programme_items = programme détaillé créé manuellement
     const settings = event.programme_settings || {
       programme_type: 'manual',
       programme_file_url: null,
-      programme_items: event.event_schedule || []
+      programme_items: []
     };
 
     res.json({
@@ -5019,10 +5028,13 @@ router.put('/events/:eventId/programme-settings', authenticateToken, celebrate({
       });
     }
 
+    // Ne PAS utiliser event_schedule comme fallback pour programme_items
+    // event_schedule = étapes principales (Cérémonie, Réception)
+    // programme_items = programme détaillé créé manuellement
     const currentSettings = event.programme_settings || {
       programme_type: 'manual',
       programme_file_url: null,
-      programme_items: event.event_schedule || []
+      programme_items: []
     };
 
     const newSettings = { ...currentSettings, ...req.body };
@@ -5031,10 +5043,8 @@ router.put('/events/:eventId/programme-settings', authenticateToken, celebrate({
       programme_settings: newSettings
     };
 
-    // Also sync programme_items with event_schedule for backward compatibility
-    if (req.body.programme_items) {
-      updateData.event_schedule = req.body.programme_items;
-    }
+    // NE PAS synchroniser programme_items avec event_schedule
+    // Ce sont deux choses différentes et indépendantes
 
     const updatedEvent = await updateEventIfOwner(req.params.eventId, req.user.id, updateData);
 

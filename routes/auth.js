@@ -82,6 +82,11 @@ router.post('/refresh-token', generalLimiter, authController.refreshToken);
 // Session check route - with JWT fallback
 // ============================================
 router.get('/session', generalLimiter, refreshSession, async (req, res) => {
+    // 🔥 CRITICAL: Prevent caching of session checks
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
     try {
         // Try to extract and verify token
         const { extractToken, verifyLocalJWT, isSupabaseUnavailable } = require('../middleware/auth');
