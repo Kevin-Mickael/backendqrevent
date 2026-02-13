@@ -4,15 +4,22 @@ const path = require('path');
 // Configure storage
 const storage = multer.memoryStorage();
 
-// 🛡️ SECURITY: Enhanced file filter to prevent XSS via SVG
+// 🛡️ SECURITY: Enhanced file filter to prevent XSS and support media files
 const fileFilter = (req, file, cb) => {
-    // Whitelist strict des extensions autorisées (PAS de SVG!)
-    const allowedFileTypes = /jpeg|jpg|png|webp/;  // Retiré: gif, svg
-    const extname = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
+    // Whitelist strict des extensions autorisées pour images et vidéos
+    const allowedImageTypes = /jpeg|jpg|png|webp/;
+    const allowedVideoTypes = /mp4|mov|webm|avi/;
+    const extname = path.extname(file.originalname).toLowerCase();
+    
+    const isImageExtValid = allowedImageTypes.test(extname);
+    const isVideoExtValid = allowedVideoTypes.test(extname);
     
     // Whitelist strict des MIME types
-    const allowedMimetypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];  // Retiré: image/gif, image/svg+xml
-    const mimetype = allowedMimetypes.includes(file.mimetype);
+    const allowedImageMimetypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const allowedVideoMimetypes = ['video/mp4', 'video/quicktime', 'video/webm', 'video/avi'];
+    
+    const isImageMimeValid = allowedImageMimetypes.includes(file.mimetype);
+    const isVideoMimeValid = allowedVideoMimetypes.includes(file.mimetype);
 
     // 🛡️ Vérification supplémentaire: bloquer les fichiers contenant du JavaScript
     const dangerousExtensions = /\.svg|\.svgz|\.html|\.htm|\.xhtml|\.js|\.jsx/i;
@@ -21,9 +28,11 @@ const fileFilter = (req, file, cb) => {
     console.log('File filter check:', {
         originalname: file.originalname,
         mimetype: file.mimetype,
-        extname: path.extname(file.originalname).toLowerCase(),
-        extnameValid: extname,
-        mimetypeValid: mimetype,
+        extname: extname,
+        isImageExtValid,
+        isVideoExtValid,
+        isImageMimeValid,
+        isVideoMimeValid,
         hasDangerousExtension: hasDangerousExtension
     });
 
@@ -33,18 +42,26 @@ const fileFilter = (req, file, cb) => {
         return cb(new Error('File type not allowed for security reasons'), false);
     }
 
-    if (extname && mimetype) {
+    // Accepter si c'est une image ou vidéo valide
+    if ((isImageExtValid && isImageMimeValid) || (isVideoExtValid && isVideoMimeValid)) {
         return cb(null, true);
     } else {
-        cb(new Error('Only image files (JPEG, PNG, WebP) are allowed!'), false);
+        cb(new Error('Only image files (JPEG, PNG, WebP) and video files (MP4, MOV, WebM, AVI) are allowed!'), false);
     }
+};
+
+// Dynamic file size limit based on file type
+const dynamicLimits = (req, file, cb) => {
+    const isVideo = file.mimetype.startsWith('video/');
+    const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024; // 50MB for videos, 10MB for images
+    cb(null, maxSize);
 };
 
 // Initialize multer
 const upload = multer({
     storage: storage,
     limits: {
-        fileSize: 5 * 1024 * 1024, // 5MB limit for images
+        fileSize: 50 * 1024 * 1024, // Maximum 50MB (pour les vidéos)
     },
     fileFilter: fileFilter,
 });

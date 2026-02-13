@@ -99,7 +99,8 @@ const sanitizeString = (input, maxLength = 1000) => {
 const sanitizeEventData = (data) => {
   const allowedFields = [
     'title', 'description', 'guest_count', 'date', 'location',
-    'cover_image', 'banner_image', 'settings', 'is_active'
+    'cover_image', 'banner_image', 'settings', 'is_active',
+    'partner1_name', 'partner2_name', 'event_schedule'
   ];
 
   const sanitized = {};
@@ -135,6 +136,14 @@ const sanitizeEventData = (data) => {
           break;
         case 'is_active':
           sanitized[field] = Boolean(data[field]);
+          break;
+        case 'partner1_name':
+        case 'partner2_name':
+          sanitized[field] = sanitizeString(data[field], 100);
+          break;
+        case 'event_schedule':
+          // Valider que c'est un array d'objets
+          sanitized[field] = Array.isArray(data[field]) ? data[field] : [];
           break;
         default:
           sanitized[field] = data[field];

@@ -60,8 +60,8 @@ const eventValidationSchema = {
       // Partner names
       partner1_name: Joi.string().optional().max(100),
       partner2_name: Joi.string().optional().max(100),
-      cover_image: Joi.string().uri().optional(),
-      banner_image: Joi.string().uri().optional(),
+      cover_image: Joi.string().uri().optional().allow(null),
+      banner_image: Joi.string().uri().optional().allow(null),
       settings: Joi.object().keys({
         enableRSVP: Joi.boolean(),
         enableGames: Joi.boolean(),
@@ -119,8 +119,8 @@ const eventValidationSchema = {
       ceremony_time: Joi.string().pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).optional(),
       reception_date: Joi.date().optional(),
       reception_time: Joi.string().pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).optional(),
-      cover_image: Joi.string().uri().optional(),
-      banner_image: Joi.string().uri().optional(),
+      cover_image: Joi.string().uri().optional().allow(null),
+      banner_image: Joi.string().uri().optional().allow(null),
       settings: Joi.object().keys({
         enableRSVP: Joi.boolean(),
         enableGames: Joi.boolean(),
@@ -354,10 +354,26 @@ router.get('/events', authenticateToken, async (req, res) => {
   try {
     const eventsList = await events.findByOrganizer(req.user.id);
 
+    // Add compatibility fields for each event
+    const eventsWithCompatibility = eventsList.map(event => ({
+      ...event,
+      // Support both old and new naming conventions
+      bride_name: event.bride_name || event.partner2_name,
+      groom_name: event.groom_name || event.partner1_name
+    }));
+
+    console.log('Events list with banner data:', eventsWithCompatibility.map(e => ({
+      id: e.id,
+      title: e.title,
+      banner_image: e.banner_image,
+      partner1_name: e.partner1_name,
+      partner2_name: e.partner2_name
+    })));
+
     res.json({
       success: true,
-      data: eventsList,
-      count: eventsList.length
+      data: eventsWithCompatibility,
+      count: eventsWithCompatibility.length
     });
   } catch (error) {
     logger.error('Error fetching events:', { error: error.message });
@@ -428,11 +444,14 @@ router.get('/debug/session', authenticateToken, async (req, res) => {
 // POST /api/events - Create a new event
 router.post('/events', authenticateToken, eventValidationSchema.create, async (req, res) => {
   try {
+    console.log('🔍 [EVENT CREATE] Raw request body:', JSON.stringify(req.body, null, 2));
+    
     // 🛡️ RÈGLE 3: Le middleware Celebrate valide déjà les données côté backend
     // req.body est maintenant validé et sécurisé par eventValidationSchema.create
 
     // 🛡️ Sanitiser les données pour éviter les injections
     const sanitizedData = sanitizeEventData(req.body);
+    console.log('🔍 [EVENT CREATE] Sanitized data:', JSON.stringify(sanitizedData, null, 2));
 
     // 🛡️ RÈGLE 5: Validation date côté backend (pas dans le passé)
     const eventDate = new Date(sanitizedData.date);
@@ -488,12 +507,15 @@ router.post('/events', authenticateToken, eventValidationSchema.create, async (r
       event_schedule: filteredData.event_schedule || []
     };
 
+    console.log('🔍 [EVENT CREATE] Final eventData:', JSON.stringify(eventData, null, 2));
     console.log('[API] Creating event with data:', {
       title: eventData.title,
       hasDescription: !!eventData.description,
       date: eventData.date,
       organizerId: eventData.organizer_id,
-      scheduleSteps: eventData.event_schedule?.length || 0
+      scheduleSteps: eventData.event_schedule?.length || 0,
+      partner1_name: eventData.partner1_name,
+      partner2_name: eventData.partner2_name
     });
 
     // 🛡️ Utilisation de la couche safe pour gérer automatiquement les différences de schéma
@@ -563,9 +585,18 @@ router.get('/events/:eventId', authenticateToken, async (req, res) => {
     }
 
     logger.info('✅ Event retrieved successfully:', { eventId: event.id, partner1: event.partner1_name, partner2: event.partner2_name });
+    
+    // Ensure backward compatibility by providing both old and new field names
+    const eventWithCompatibility = {
+      ...event,
+      // Support both old and new naming conventions
+      bride_name: event.bride_name || event.partner2_name,
+      groom_name: event.groom_name || event.partner1_name
+    };
+    
     res.json({
       success: true,
-      data: event
+      data: eventWithCompatibility
     });
   } catch (error) {
     logger.error('💥 Error fetching event:', { error: error.message, stack: error.stack });
@@ -707,8 +738,11 @@ router.get('/events/:eventId/public', async (req, res) => {
       location: event.location,
       banner_image: event.banner_image,
       cover_image: event.cover_image,
-      bride_name: event.bride_name,
-      groom_name: event.groom_name,
+      // Support both old and new naming conventions
+      bride_name: event.bride_name || event.partner2_name,
+      groom_name: event.groom_name || event.partner1_name,
+      partner1_name: event.partner1_name,
+      partner2_name: event.partner2_name,
       settings: event.settings
     };
 
@@ -976,8 +1010,28 @@ router.post('/events/:eventId/upload-banner', authenticateToken, upload.single('
           }
         });
       }
+    } else if (req.file.mimetype.startsWith('video/')) {
+      // For video files, upload directly without processing for better performance
+      console.log('[BANNER VIDEO] Processing video upload directly');
+      const folder = buildSecurePath('events', req.params.eventId, 'banners');
+      const publicUrl = await storageService.uploadFile(req.file, folder);
+
+      // Update the event with the banner URL
+      const updatedEvent = await events.update(req.params.eventId, {
+        banner_image: publicUrl
+      });
+
+      console.log('[BANNER VIDEO] Video upload completed successfully');
+      res.json({
+        success: true,
+        message: 'Video banner uploaded successfully',
+        data: {
+          eventId: updatedEvent.id,
+          bannerUrl: publicUrl
+        }
+      });
     } else {
-      // For non-image files, upload directly
+      // For other non-image files, upload directly
       const folder = buildSecurePath('events', req.params.eventId, 'banners');
       const publicUrl = await storageService.uploadFile(req.file, folder);
 
@@ -988,7 +1042,7 @@ router.post('/events/:eventId/upload-banner', authenticateToken, upload.single('
 
       res.json({
         success: true,
-        message: 'Banner uploaded and event updated successfully',
+        message: 'Banner uploaded successfully',
         data: {
           eventId: updatedEvent.id,
           bannerUrl: publicUrl
@@ -1011,6 +1065,78 @@ router.post('/events/:eventId/upload-banner', authenticateToken, upload.single('
     res.status(500).json({
       success: false,
       message: config.nodeEnv === 'development' ? error.message : 'Server error while uploading banner'
+    });
+  }
+});
+
+// DELETE /api/events/:eventId/remove-banner - Remove banner image for an event
+router.delete('/events/:eventId/remove-banner', authenticateToken, async (req, res) => {
+  try {
+    console.log('[BANNER REMOVE] Starting removal for event:', req.params.eventId);
+
+    // 🛡️ SECURITY: Validate eventId format to prevent injection
+    try {
+      validateEventId(req.params.eventId);
+      console.log('[BANNER REMOVE] Event ID validation passed');
+    } catch (error) {
+      console.error('[BANNER REMOVE] Event ID validation failed:', error.message);
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid event ID format'
+      });
+    }
+
+    // Verify event belongs to user
+    let event;
+    try {
+      event = await events.findById(req.params.eventId);
+    } catch (error) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found or you do not have permission to access it'
+      });
+    }
+
+    if (!event || event.organizer_id !== req.user.id) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found or you do not have permission to access it'
+      });
+    }
+
+    // Delete old banner if exists
+    const oldBannerUrl = event.banner_image;
+    if (oldBannerUrl) {
+      try {
+        console.log('[BANNER REMOVE] Deleting banner from storage', { url: oldBannerUrl });
+        await storageService.deleteFile(oldBannerUrl);
+        console.log('[BANNER REMOVE] Banner file deleted successfully');
+      } catch (error) {
+        console.error('[BANNER REMOVE] Failed to delete old banner:', error.message);
+        // Continue with database update even if file deletion fails
+      }
+    }
+
+    // Update the event to remove banner URL
+    const updatedEvent = await events.update(req.params.eventId, {
+      banner_image: null
+    });
+
+    console.log('[BANNER REMOVE] Banner removed successfully for event:', req.params.eventId);
+
+    res.json({
+      success: true,
+      message: 'Banner removed successfully',
+      data: {
+        eventId: updatedEvent.id
+      }
+    });
+
+  } catch (error) {
+    console.error('[BANNER REMOVE] Error removing banner:', error.message);
+    res.status(500).json({
+      success: false,
+      message: config.nodeEnv === 'development' ? error.message : 'Server error while removing banner'
     });
   }
 });
